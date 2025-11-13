@@ -1,0 +1,25 @@
+# Source files
+src/
+*.ts
+!*.d.ts
+
+# Config files
+tsconfig.json
+tsup.config.ts
+
+# Documentation
+ARCHITECTURE.md
+EXAMPLES.md
+
+# Development files
+.github/
+.vscode/
+*.log
+
+# Tests
+**/*.test.*
+**/*.spec.*
+coverage/
+
+# Keep templates directory - it's needed at runtime!
+# (Don't add templates/ here)
