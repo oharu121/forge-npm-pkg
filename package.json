@@ -34,8 +34,16 @@
     "typescript",
     "generator"
   ],
-  "author": "",
+  "author": "oharu121 <jefflin1201@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oharu121/forge-npm-pkg.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oharu121/forge-npm-pkg/issues"
+  },
+  "homepage": "https://github.com/oharu121/forge-npm-pkg#readme",
   "dependencies": {
     "@clack/prompts": "^0.7.0",
     "commander": "^12.0.0",
