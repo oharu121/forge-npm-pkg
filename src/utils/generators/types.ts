@@ -12,6 +12,8 @@ export interface ProjectConfig {
   initGit: boolean;
   setupCI?: boolean;
   setupCD?: boolean;
+  useCodecov?: boolean;
+  useDependabot?: boolean;
   packageManager?: 'npm' | 'pnpm' | 'yarn' | 'bun';
   description?: string;
   author?: string;

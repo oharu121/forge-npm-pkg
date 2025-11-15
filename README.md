@@ -20,6 +20,8 @@ A powerful CLI tool to scaffold production-ready npm packages with modern best p
 - ESLint + Prettier for code quality
 - GitHub Actions CI/CD workflows (optional)
 - Automated releases with Changesets
+- Test coverage tracking with Codecov (optional)
+- Automated dependency updates with Dependabot (optional)
 - User configuration storage (save author info for future projects)
 - Package export validation with `@arethetypeswrong/cli`
 - Proper `package.json` exports configuration
@@ -49,8 +51,10 @@ The CLI will ask you several questions and generate a complete project structure
 2. **Module Format**: ESM (Modern), CommonJS (Legacy), or Dual (ESM + CJS)
 3. **Test Runner**: Vitest, Jest, or None
 4. **Linting**: Initialize ESLint + Prettier?
-5. **Automation**: Set up automated releases with Changesets?
-6. **Git**: Initialize a new git repository?
+5. **Git**: Initialize a new git repository?
+6. **CI/CD**: Set up GitHub Actions workflows?
+7. **Coverage**: Upload test coverage to Codecov? (optional, requires tests)
+8. **Dependencies**: Set up Dependabot for automated dependency updates? (optional)
 
 ### Generated Structure
 
@@ -60,8 +64,10 @@ my-awesome-package/
 │   ├── index.ts (or .js)
 │   └── index.test.ts (if testing enabled)
 ├── .github/
-│   └── workflows/
-│       └── release.yml (if Changesets enabled)
+│   ├── workflows/
+│   │   ├── ci.yml (if CI enabled)
+│   │   └── release.yml (if Changesets enabled)
+│   └── dependabot.yml (if Dependabot enabled)
 ├── package.json
 ├── tsconfig.json (if TypeScript)
 ├── tsup.config.ts (if TypeScript)
@@ -146,25 +152,348 @@ Exports both ESM and CommonJS for maximum compatibility.
 }
 ```
 
-## Publishing Your Package
+## Complete Workflow Guide
 
-### Manual Publishing
+This section walks you through the entire process of creating and publishing an npm package with automated CI/CD.
+
+### 1. Initial Setup
+
+Create your package with automated publishing enabled:
+
+```bash
+npx forge-npm-pkg my-awesome-package
+```
+
+**Select these options:**
+- Language: TypeScript (recommended)
+- Module format: ESM (modern)
+- Test runner: Vitest (fast & modern)
+- Linting: Yes (ESLint + Prettier)
+- Git: Yes (initialize repository)
+- CI: Yes (run tests on every push)
+- CD: Yes (automated publishing)
+
+The tool will:
+- ✓ Create project structure
+- ✓ Install dependencies
+- ✓ Initialize git repository
+- ✓ Set up Changesets for version management
+- ✓ Create GitHub Actions workflows (CI + Release)
+- ✓ Run initial build to verify setup
+
+### 2. Create GitHub Repository
 
 ```bash
 cd my-awesome-package
+
+# Create repository on GitHub (using GitHub CLI)
+gh repo create my-awesome-package --public --source=. --remote=origin
+
+# Or manually:
+# 1. Go to https://github.com/new
+# 2. Create repository named "my-awesome-package"
+# 3. Follow GitHub's instructions to push existing repository
+
+# Push to GitHub
+git remote add origin https://github.com/yourusername/my-awesome-package.git
+git branch -M main
+git push -u origin main
+```
+
+### 3. Add NPM Token to GitHub
+
+To enable automated publishing, you need to add your npm token to GitHub:
+
+**A. Create NPM Access Token:**
+
+1. Go to [npmjs.com](https://www.npmjs.com)
+2. Click your profile → Access Tokens
+3. Click "Generate New Token" → "Classic Token"
+4. Select type: **Automation** (for CI/CD)
+5. Copy the token (starts with `npm_...`)
+
+**B. Add Token to GitHub:**
+
+```bash
+# Using GitHub CLI (recommended)
+gh secret set NPM_TOKEN
+
+# Or manually:
+# 1. Go to https://github.com/yourusername/my-awesome-package/settings/secrets/actions
+# 2. Click "New repository secret"
+# 3. Name: NPM_TOKEN
+# 4. Value: [paste your npm token]
+# 5. Click "Add secret"
+```
+
+### 4. Develop Your Package
+
+**Write your code:**
+
+```typescript
+// src/index.ts
+export function greet(name: string): string {
+  return `Hello, ${name}!`;
+}
+
+export function add(a: number, b: number): number {
+  return a + b;
+}
+```
+
+**Write tests:**
+
+```typescript
+// src/index.test.ts
+import { describe, it, expect } from 'vitest';
+import { greet, add } from './index.js';
+
+describe('greet', () => {
+  it('should return a greeting message', () => {
+    expect(greet('World')).toBe('Hello, World!');
+  });
+});
+
+describe('add', () => {
+  it('should add two numbers correctly', () => {
+    expect(add(2, 3)).toBe(5);
+  });
+});
+```
+
+**Run tests locally:**
+
+```bash
+npm test              # Run tests
+npm run build         # Build package
+npm run typecheck     # Type checking
+npm run lint          # Lint code
+```
+
+### 5. Create a Changeset (Version Bump)
+
+When you're ready to release changes:
+
+```bash
+npm run changeset
+```
+
+**Changeset will ask:**
+1. **Which packages to include?** Press `<space>` to select, `<enter>` to confirm
+2. **What type of change?**
+   - `major` - Breaking changes (1.0.0 → 2.0.0)
+   - `minor` - New features (1.0.0 → 1.1.0)
+   - `patch` - Bug fixes (1.0.0 → 1.0.1)
+3. **Summary:** Describe the changes
+
+This creates a file in `.changeset/` with your change details.
+
+**Example:**
+```bash
+$ npm run changeset
+🦋  Which packages would you like to include? · my-awesome-package
+🦋  Which type of change is this for my-awesome-package? · minor
+🦋  Please enter a summary for this change:
+Added greet() function with tests
+```
+
+**Available Changeset Scripts:**
+- `npm run changeset` - Create a new changeset (use this!)
+- `npm run version-packages` - Bump version (automated by CI)
+- `npm run release` - Publish to npm (automated by CI - **⚠️ don't run manually!**)
+
+### 6. Commit and Push
+
+```bash
+git add .
+git commit -m "feat: add greet function"
+git push
+```
+
+**What happens automatically:**
+1. ✓ GitHub Actions runs CI workflow
+2. ✓ Tests are executed
+3. ✓ TypeScript type checking runs
+4. ✓ Linting checks run
+5. ✓ Build is verified
+6. ✓ Changesets bot creates a "Version Packages" PR (if changesets exist)
+
+### 7. Merge Release PR
+
+1. Go to your GitHub repository
+2. You'll see a PR titled **"Version Packages"** created by `github-actions[bot]`
+3. Review the PR - it will show:
+   - Version bump (e.g., 0.1.0 → 0.2.0)
+   - Updated CHANGELOG.md
+   - Updated package.json version
+4. Click **"Merge pull request"**
+
+**What happens when you merge:**
+1. ✓ Changesets workflow triggers
+2. ✓ Package version is bumped
+3. ✓ CHANGELOG is updated
+4. ✓ Git tag is created
+5. ✓ `npm run build` executes
+6. ✓ **Package is published to npm** 🎉
+7. ✓ GitHub release is created
+
+### 8. Verify Publication
+
+```bash
+# Check npm
+npm view my-awesome-package
+
+# Install in another project
+npm install my-awesome-package
+```
+
+### 9. Ongoing Development Workflow
+
+For every new feature or bug fix:
+
+```bash
+# 1. Make changes
+vim src/index.ts
+
+# 2. Write tests
+vim src/index.test.ts
+
+# 3. Run tests locally
+npm test
+
+# 4. Create changeset
+npm run changeset
+# Select: patch (bug fix) or minor (new feature)
+
+# 5. Commit and push
+git add .
+git commit -m "fix: resolve edge case in greet()"
+git push
+
+# 6. Wait for CI to pass
+# 7. Merge the "Version Packages" PR
+# 8. Package auto-publishes to npm!
+```
+
+### Common Scenarios
+
+#### Multiple Changes Before Release
+
+You can create multiple changesets before releasing:
+
+```bash
+# Feature 1
+git commit -m "feat: add multiply function"
+npm run changeset  # minor
+
+# Feature 2
+git commit -m "feat: add divide function"
+npm run changeset  # minor
+
+# Bug fix
+git commit -m "fix: handle negative numbers"
+npm run changeset  # patch
+
+git push
+```
+
+All changesets will be combined into one release PR.
+
+#### Emergency Patch Release
+
+```bash
+# Fix critical bug
+vim src/index.ts
+npm test
+
+# Create patch changeset
+npm run changeset  # Select "patch"
+
+# Push immediately
+git add .
+git commit -m "fix: critical bug in production"
+git push
+
+# Merge Version Packages PR immediately
+# Package publishes automatically
+```
+
+#### Manual Version Release
+
+If you need to publish manually (bypass CI/CD):
+
+```bash
+# Consume all changesets and bump version
+npm run version-packages
+
+# Build and publish
 npm run build
 npm publish
 ```
 
-### Automated Publishing with Changesets
+### Workflow Diagram
 
-If you enabled Changesets, use this workflow:
+```
+┌─────────────────────────────────────────────────────────┐
+│ 1. Developer writes code + tests                        │
+└────────────────────┬────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│ 2. npm run changeset (describe changes)                 │
+└────────────────────┬────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│ 3. git commit + git push                                │
+└────────────────────┬────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│ 4. GitHub Actions CI runs (tests, lint, build)          │
+└────────────────────┬────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│ 5. Changesets creates "Version Packages" PR             │
+│    - Bumps version in package.json                      │
+│    - Updates CHANGELOG.md                               │
+└────────────────────┬────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│ 6. Developer merges PR                                  │
+└────────────────────┬────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│ 7. GitHub Actions Release workflow triggers             │
+│    - Builds package                                     │
+│    - Runs: npm run release (publishes to npm)           │
+│    - Creates GitHub release                             │
+└─────────────────────────────────────────────────────────┘
+```
 
-1. Make your changes
-2. Run `npx changeset` to create a changeset
-3. Commit and push to GitHub
-4. The CI will create a release PR
-5. Merge the PR to publish automatically
+### Troubleshooting
+
+**CI fails on push:**
+- Check GitHub Actions tab for error details
+- Run `npm run build` and `npm test` locally first
+- Ensure all tests pass before pushing
+
+**NPM_TOKEN error during publish:**
+- Verify token is added to GitHub secrets
+- Token must be "Automation" type, not "Publish"
+- Check token hasn't expired
+
+**Changesets PR not created:**
+- Ensure you created a changeset: `npm run changeset`
+- Check `.changeset/` folder has `.md` files
+- Verify GitHub Actions has write permissions
+
+**Accidentally ran `npm run release` manually:**
+- This may cause duplicate publishing attempts
+- Check GitHub Actions logs to see if publish already happened
+- If needed, you can manually increment the version and create a new changeset
+
+**Package not publishing:**
+- Check package name is available on npm
+- Verify NPM_TOKEN is correct
+- Check GitHub Actions logs for error details
 
 ## Configuration Management
 

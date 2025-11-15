@@ -5,7 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2025-11-16
+
+### Added
+- Logo banner and version number display at startup for better branding and visual identity
+- `useCodecov` option to make test coverage tracking opt-in (default: false)
+- `useDependabot` option for automated dependency updates (default: false)
+- Educational notes before each prompt explaining benefits and requirements
+- Conditional Codecov integration in CI workflow (only when opted-in, prevents failures when token is missing)
+- `.github/dependabot.yml` generation when Dependabot is opted-in
+- Conditional README badges (Codecov and CI status only shown when relevant)
+- Changesets support to forge-npm-pkg itself for automated releases
+- Proper Changesets release workflow (`.github/workflows/release.yml`)
+- Dependabot configuration for forge-npm-pkg repository maintenance
+
+### Changed
+- **BREAKING**: Removed preset selection (Library/CLI/Legacy/Custom) for cleaner, more intuitive UX
+- Interactive mode now directly asks all configuration questions instead of choosing presets
+- TypeScript is now the default language (first option, just press Enter)
+- Educational notes now appear BEFORE all prompts (not after user makes selection)
+- Updated language hints: "Recommended - Modern standard" for TypeScript vs "Simple projects only" for JavaScript
+- Improved CD prompt with detailed benefits, workflow explanation, and clear recommendations
+- Simplified mental model: either use defaults (`--yes` flag) or answer questions interactively
+- `--yes` flag continues to work with sensible defaults (no breaking change for this usage)
+
+### Improved
+- Added warning when JavaScript is selected to guide users toward TypeScript best practices
+- More consistent experience across all usage modes
+- Less code to maintain, fewer potential bugs
+- Better user education through contextual prompts
+
+### Fixed
+- CD (Automated Publishing) benefits note now appears BEFORE the prompt, not after selection
+- All optional features (Codecov, Dependabot, CD) now follow consistent "inform then ask" pattern
+
+## [1.1.0] - 2025-11-14
 
 ### Added
 - Explicit user confirmation prompt before installing npm packages - asks "Install dependencies now?" instead of installing automatically
@@ -52,5 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Post-install verification (runs build to ensure setup works)
 - Parallel post-install tasks (git init, changesets setup)
 
-[Unreleased]: https://github.com/oharu121/forge-npm-pkg/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/oharu121/forge-npm-pkg/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/oharu121/forge-npm-pkg/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/oharu121/forge-npm-pkg/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/oharu121/forge-npm-pkg/releases/tag/v1.0.1

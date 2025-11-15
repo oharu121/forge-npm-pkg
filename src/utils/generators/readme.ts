@@ -20,9 +20,13 @@ export function generateReadme(config: ProjectConfig): string {
 ![NPM Downloads](https://img.shields.io/npm/dw/${packageName})
 ![Last Commit](https://img.shields.io/github/last-commit/oharu121/${packageName})
 ${
-  config.testRunner !== "none"
+  config.useCodecov && config.testRunner !== "none"
     ? `![Coverage](https://codecov.io/gh/${githubUsername}/${packageName}/branch/main/graph/badge.svg)
-![CI Status](https://github.com/${githubUsername}/${packageName}/actions/workflows/ci.yml/badge.svg)`
+`
+    : ""
+}${
+  config.setupCI
+    ? `![CI Status](https://github.com/${githubUsername}/${packageName}/actions/workflows/ci.yml/badge.svg)`
     : ""
 }
 ![GitHub Stars](https://img.shields.io/github/stars/${githubUsername}/${packageName}?style=social)
@@ -85,6 +89,40 @@ ${
 \`\`\`bash
 npm run check:exports
 \`\`\`
+`
+    : ""
+}
+${
+  config.useChangesets
+    ? `## Release Workflow
+
+This package uses [Changesets](https://github.com/changesets/changesets) for version management and automated releases.
+
+### Creating a Release
+
+1. **Make your changes** and commit them
+2. **Create a changeset:**
+   \`\`\`bash
+   npm run changeset
+   \`\`\`
+   Select the type of change (major/minor/patch) and provide a description
+3. **Commit the changeset:**
+   \`\`\`bash
+   git add .
+   git commit -m "feat: your feature description"
+   git push
+   \`\`\`
+4. **Merge the "Version Packages" PR** created by the Changesets bot
+5. **Package automatically publishes to npm** 🎉
+
+### Available Scripts
+
+- \`npm run changeset\` - Create a new changeset (run this for each change)
+- \`npm run version-packages\` - Bump versions based on changesets (automated via CI)
+- \`npm run release\` - Publish to npm (automated via CI - **do not run manually!**)
+
+**⚠️ Important:** The \`release\` script is automatically run by GitHub Actions. Running it manually may cause unexpected behavior.
+
 `
     : ""
 }

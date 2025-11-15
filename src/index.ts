@@ -22,7 +22,7 @@ import {
   generateRootIndexMjs,
   generateRootIndexDts,
   generateCIWorkflow,
-  generateCDWorkflow,
+  generateDependabotConfig,
 } from "./utils/generators/index.js";
 import {
   readUserConfig,
@@ -31,6 +31,17 @@ import {
   getConfigPath,
 } from "./utils/userConfig.js";
 import { readGitConfig, formatGitConfig } from "./utils/gitConfig.js";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+// Get package version
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, "../package.json"), "utf-8")
+);
+const VERSION = packageJson.version;
 
 // Constants
 const INITIAL_COMMIT_MESSAGE = "chore: initial commit";
@@ -118,6 +129,27 @@ program
   .option("--no-git", "Skip git initialization")
   .action(async (packageName?: string, options?: any) => {
     console.clear();
+
+    // Display logo banner
+    console.log(
+      "\n" +
+        "\x1b[38;2;253;187;45m█\x1b[39m\x1b[38;2;249;187;48m█\x1b[39m\x1b[38;2;245;187;50m█\x1b[39m\x1b[38;2;241;187;53m█\x1b[39m\x1b[38;2;238;187;56m█\x1b[39m\x1b[38;2;234;188;58m█\x1b[39m\x1b[38;2;230;188;61m█\x1b[39m\x1b[38;2;226;188;63m╗\x1b[39m\x1b[38;2;222;188;66m \x1b[39m\x1b[38;2;218;188;69m█\x1b[39m\x1b[38;2;215;188;71m█\x1b[39m\x1b[38;2;211;188;74m█\x1b[39m\x1b[38;2;207;188;77m█\x1b[39m\x1b[38;2;203;188;79m█\x1b[39m\x1b[38;2;199;188;82m█\x1b[39m\x1b[38;2;195;189;84m╗\x1b[39m\x1b[38;2;192;189;87m \x1b[39m\x1b[38;2;188;189;90m█\x1b[39m\x1b[38;2;184;189;92m█\x1b[39m\x1b[38;2;180;189;95m█\x1b[39m\x1b[38;2;176;189;98m█\x1b[39m\x1b[38;2;172;189;100m█\x1b[39m\x1b[38;2;168;189;103m█\x1b[39m\x1b[38;2;165;189;106m╗\x1b[39m\x1b[38;2;161;190;108m \x1b[39m\x1b[38;2;157;190;111m \x1b[39m\x1b[38;2;153;190;113m█\x1b[39m\x1b[38;2;149;190;116m█\x1b[39m\x1b[38;2;145;190;119m█\x1b[39m\x1b[38;2;142;190;121m█\x1b[39m\x1b[38;2;138;190;124m█\x1b[39m\x1b[38;2;134;190;127m█\x1b[39m\x1b[38;2;130;190;129m╗\x1b[39m\x1b[38;2;126;190;132m \x1b[39m\x1b[38;2;122;191;134m█\x1b[39m\x1b[38;2;119;191;137m█\x1b[39m\x1b[38;2;115;191;140m█\x1b[39m\x1b[38;2;111;191;142m█\x1b[39m\x1b[38;2;107;191;145m█\x1b[39m\x1b[38;2;103;191;148m█\x1b[39m\x1b[38;2;99;191;150m█\x1b[39m\x1b[38;2;95;191;153m╗\x1b[39m\n" +
+        "\x1b[38;2;253;187;45m█\x1b[39m\x1b[38;2;249;187;48m█\x1b[39m\x1b[38;2;245;187;50m╔\x1b[39m\x1b[38;2;241;187;53m═\x1b[39m\x1b[38;2;238;187;56m═\x1b[39m\x1b[38;2;234;188;58m═\x1b[39m\x1b[38;2;230;188;61m═\x1b[39m\x1b[38;2;226;188;63m╝\x1b[39m\x1b[38;2;222;188;66m█\x1b[39m\x1b[38;2;218;188;69m█\x1b[39m\x1b[38;2;215;188;71m╔\x1b[39m\x1b[38;2;211;188;74m═\x1b[39m\x1b[38;2;207;188;77m═\x1b[39m\x1b[38;2;203;188;79m═\x1b[39m\x1b[38;2;199;188;82m█\x1b[39m\x1b[38;2;195;189;84m█\x1b[39m\x1b[38;2;192;189;87m╗\x1b[39m\x1b[38;2;188;189;90m█\x1b[39m\x1b[38;2;184;189;92m█\x1b[39m\x1b[38;2;180;189;95m╔\x1b[39m\x1b[38;2;176;189;98m═\x1b[39m\x1b[38;2;172;189;100m═\x1b[39m\x1b[38;2;168;189;103m█\x1b[39m\x1b[38;2;165;189;106m█\x1b[39m\x1b[38;2;161;190;108m╗\x1b[39m\x1b[38;2;157;190;111m█\x1b[39m\x1b[38;2;153;190;113m█\x1b[39m\x1b[38;2;149;190;116m╔\x1b[39m\x1b[38;2;145;190;119m═\x1b[39m\x1b[38;2;142;190;121m═\x1b[39m\x1b[38;2;138;190;124m═\x1b[39m\x1b[38;2;134;190;127m═\x1b[39m\x1b[38;2;130;190;129m╝\x1b[39m\x1b[38;2;126;190;132m \x1b[39m\x1b[38;2;122;191;134m█\x1b[39m\x1b[38;2;119;191;137m█\x1b[39m\x1b[38;2;115;191;140m╔\x1b[39m\x1b[38;2;111;191;142m═\x1b[39m\x1b[38;2;107;191;145m═\x1b[39m\x1b[38;2;103;191;148m═\x1b[39m\x1b[38;2;99;191;150m═\x1b[39m\x1b[38;2;95;191;153m╝\x1b[39m\n" +
+        "\x1b[38;2;253;187;45m█\x1b[39m\x1b[38;2;249;187;48m█\x1b[39m\x1b[38;2;245;187;50m█\x1b[39m\x1b[38;2;241;187;53m█\x1b[39m\x1b[38;2;238;187;56m█\x1b[39m\x1b[38;2;234;188;58m╗\x1b[39m\x1b[38;2;230;188;61m \x1b[39m\x1b[38;2;226;188;63m \x1b[39m\x1b[38;2;222;188;66m█\x1b[39m\x1b[38;2;218;188;69m█\x1b[39m\x1b[38;2;215;188;71m║\x1b[39m\x1b[38;2;211;188;74m \x1b[39m\x1b[38;2;207;188;77m \x1b[39m\x1b[38;2;203;188;79m \x1b[39m\x1b[38;2;199;188;82m█\x1b[39m\x1b[38;2;195;189;84m█\x1b[39m\x1b[38;2;192;189;87m║\x1b[39m\x1b[38;2;188;189;90m█\x1b[39m\x1b[38;2;184;189;92m█\x1b[39m\x1b[38;2;180;189;95m█\x1b[39m\x1b[38;2;176;189;98m█\x1b[39m\x1b[38;2;172;189;100m█\x1b[39m\x1b[38;2;168;189;103m█\x1b[39m\x1b[38;2;165;189;106m╔\x1b[39m\x1b[38;2;161;190;108m╝\x1b[39m\x1b[38;2;157;190;111m█\x1b[39m\x1b[38;2;153;190;113m█\x1b[39m\x1b[38;2;149;190;116m║\x1b[39m\x1b[38;2;145;190;119m \x1b[39m\x1b[38;2;142;190;121m \x1b[39m\x1b[38;2;138;190;124m█\x1b[39m\x1b[38;2;134;190;127m█\x1b[39m\x1b[38;2;130;190;129m█\x1b[39m\x1b[38;2;126;190;132m╗\x1b[39m\x1b[38;2;122;191;134m█\x1b[39m\x1b[38;2;119;191;137m█\x1b[39m\x1b[38;2;115;191;140m█\x1b[39m\x1b[38;2;111;191;142m█\x1b[39m\x1b[38;2;107;191;145m█\x1b[39m\x1b[38;2;103;191;148m╗\x1b[39m\n" +
+        "\x1b[38;2;253;187;45m█\x1b[39m\x1b[38;2;249;187;48m█\x1b[39m\x1b[38;2;245;187;50m╔\x1b[39m\x1b[38;2;241;187;53m═\x1b[39m\x1b[38;2;238;187;56m═\x1b[39m\x1b[38;2;234;188;58m╝\x1b[39m\x1b[38;2;230;188;61m \x1b[39m\x1b[38;2;226;188;63m \x1b[39m\x1b[38;2;222;188;66m█\x1b[39m\x1b[38;2;218;188;69m█\x1b[39m\x1b[38;2;215;188;71m║\x1b[39m\x1b[38;2;211;188;74m \x1b[39m\x1b[38;2;207;188;77m \x1b[39m\x1b[38;2;203;188;79m \x1b[39m\x1b[38;2;199;188;82m█\x1b[39m\x1b[38;2;195;189;84m█\x1b[39m\x1b[38;2;192;189;87m║\x1b[39m\x1b[38;2;188;189;90m█\x1b[39m\x1b[38;2;184;189;92m█\x1b[39m\x1b[38;2;180;189;95m╔\x1b[39m\x1b[38;2;176;189;98m═\x1b[39m\x1b[38;2;172;189;100m═\x1b[39m\x1b[38;2;168;189;103m█\x1b[39m\x1b[38;2;165;189;106m█\x1b[39m\x1b[38;2;161;190;108m╗\x1b[39m\x1b[38;2;157;190;111m█\x1b[39m\x1b[38;2;153;190;113m█\x1b[39m\x1b[38;2;149;190;116m║\x1b[39m\x1b[38;2;145;190;119m \x1b[39m\x1b[38;2;142;190;121m \x1b[39m\x1b[38;2;138;190;124m \x1b[39m\x1b[38;2;134;190;127m█\x1b[39m\x1b[38;2;130;190;129m█\x1b[39m\x1b[38;2;126;190;132m║\x1b[39m\x1b[38;2;122;191;134m█\x1b[39m\x1b[38;2;119;191;137m█\x1b[39m\x1b[38;2;115;191;140m╔\x1b[39m\x1b[38;2;111;191;142m═\x1b[39m\x1b[38;2;107;191;145m═\x1b[39m\x1b[38;2;103;191;148m╝\x1b[39m\n" +
+        "\x1b[38;2;253;187;45m█\x1b[39m\x1b[38;2;249;187;48m█\x1b[39m\x1b[38;2;245;187;50m║\x1b[39m\x1b[38;2;241;187;53m \x1b[39m\x1b[38;2;238;187;56m \x1b[39m\x1b[38;2;234;188;58m \x1b[39m\x1b[38;2;230;188;61m \x1b[39m\x1b[38;2;226;188;63m \x1b[39m\x1b[38;2;222;188;66m╚\x1b[39m\x1b[38;2;218;188;69m█\x1b[39m\x1b[38;2;215;188;71m█\x1b[39m\x1b[38;2;211;188;74m█\x1b[39m\x1b[38;2;207;188;77m█\x1b[39m\x1b[38;2;203;188;79m█\x1b[39m\x1b[38;2;199;188;82m█\x1b[39m\x1b[38;2;195;189;84m╔\x1b[39m\x1b[38;2;192;189;87m╝\x1b[39m\x1b[38;2;188;189;90m█\x1b[39m\x1b[38;2;184;189;92m█\x1b[39m\x1b[38;2;180;189;95m║\x1b[39m\x1b[38;2;176;189;98m \x1b[39m\x1b[38;2;172;189;100m \x1b[39m\x1b[38;2;168;189;103m█\x1b[39m\x1b[38;2;165;189;106m█\x1b[39m\x1b[38;2;161;190;108m║\x1b[39m\x1b[38;2;157;190;111m╚\x1b[39m\x1b[38;2;153;190;113m█\x1b[39m\x1b[38;2;149;190;116m█\x1b[39m\x1b[38;2;145;190;119m█\x1b[39m\x1b[38;2;142;190;121m█\x1b[39m\x1b[38;2;138;190;124m█\x1b[39m\x1b[38;2;134;190;127m█\x1b[39m\x1b[38;2;130;190;129m╔\x1b[39m\x1b[38;2;126;190;132m╝\x1b[39m\x1b[38;2;122;191;134m█\x1b[39m\x1b[38;2;119;191;137m█\x1b[39m\x1b[38;2;115;191;140m█\x1b[39m\x1b[38;2;111;191;142m█\x1b[39m\x1b[38;2;107;191;145m█\x1b[39m\x1b[38;2;103;191;148m█\x1b[39m\x1b[38;2;99;191;150m█\x1b[39m\x1b[38;2;95;191;153m╗\x1b[39m\n" +
+        "\x1b[38;2;253;187;45m╚\x1b[39m\x1b[38;2;249;187;48m═\x1b[39m\x1b[38;2;245;187;50m╝\x1b[39m\x1b[38;2;241;187;53m \x1b[39m\x1b[38;2;238;187;56m \x1b[39m\x1b[38;2;234;188;58m \x1b[39m\x1b[38;2;230;188;61m \x1b[39m\x1b[38;2;226;188;63m \x1b[39m\x1b[38;2;222;188;66m \x1b[39m\x1b[38;2;218;188;69m╚\x1b[39m\x1b[38;2;215;188;71m═\x1b[39m\x1b[38;2;211;188;74m═\x1b[39m\x1b[38;2;207;188;77m═\x1b[39m\x1b[38;2;203;188;79m═\x1b[39m\x1b[38;2;199;188;82m═\x1b[39m\x1b[38;2;195;189;84m╝\x1b[39m\x1b[38;2;192;189;87m \x1b[39m\x1b[38;2;188;189;90m╚\x1b[39m\x1b[38;2;184;189;92m═\x1b[39m\x1b[38;2;180;189;95m╝\x1b[39m\x1b[38;2;176;189;98m \x1b[39m\x1b[38;2;172;189;100m \x1b[39m\x1b[38;2;168;189;103m╚\x1b[39m\x1b[38;2;165;189;106m═\x1b[39m\x1b[38;2;161;190;108m╝\x1b[39m\x1b[38;2;157;190;111m \x1b[39m\x1b[38;2;153;190;113m╚\x1b[39m\x1b[38;2;149;190;116m═\x1b[39m\x1b[38;2;145;190;119m═\x1b[39m\x1b[38;2;142;190;121m═\x1b[39m\x1b[38;2;138;190;124m═\x1b[39m\x1b[38;2;134;190;127m═\x1b[39m\x1b[38;2;130;190;129m╝\x1b[39m\x1b[38;2;126;190;132m \x1b[39m\x1b[38;2;122;191;134m╚\x1b[39m\x1b[38;2;119;191;137m═\x1b[39m\x1b[38;2;115;191;140m═\x1b[39m\x1b[38;2;111;191;142m═\x1b[39m\x1b[38;2;107;191;145m═\x1b[39m\x1b[38;2;103;191;148m═\x1b[39m\x1b[38;2;99;191;150m═\x1b[39m\x1b[38;2;95;191;153m╝\x1b[39m\n" +
+        "\n" +
+        "\x1b[38;2;253;187;45m█\x1b[39m\x1b[38;2;249;187;48m█\x1b[39m\x1b[38;2;245;187;50m█\x1b[39m\x1b[38;2;241;187;53m╗\x1b[39m\x1b[38;2;238;187;56m \x1b[39m\x1b[38;2;234;188;58m \x1b[39m\x1b[38;2;230;188;61m \x1b[39m\x1b[38;2;226;188;63m█\x1b[39m\x1b[38;2;222;188;66m█\x1b[39m\x1b[38;2;218;188;69m╗\x1b[39m\x1b[38;2;215;188;71m█\x1b[39m\x1b[38;2;211;188;74m█\x1b[39m\x1b[38;2;207;188;77m█\x1b[39m\x1b[38;2;203;188;79m█\x1b[39m\x1b[38;2;199;188;82m█\x1b[39m\x1b[38;2;195;189;84m█\x1b[39m\x1b[38;2;192;189;87m╗\x1b[39m\x1b[38;2;188;189;90m \x1b[39m\x1b[38;2;184;189;92m█\x1b[39m\x1b[38;2;180;189;95m█\x1b[39m\x1b[38;2;176;189;98m█\x1b[39m\x1b[38;2;172;189;100m╗\x1b[39m\x1b[38;2;168;189;103m \x1b[39m\x1b[38;2;165;189;106m \x1b[39m\x1b[38;2;161;190;108m \x1b[39m\x1b[38;2;157;190;111m█\x1b[39m\x1b[38;2;153;190;113m█\x1b[39m\x1b[38;2;149;190;116m█\x1b[39m\x1b[38;2;145;190;119m╗\x1b[39m\x1b[38;2;142;190;121m \x1b[39m\x1b[38;2;138;190;124m \x1b[39m\x1b[38;2;134;190;127m \x1b[39m\x1b[38;2;130;190;129m \x1b[39m\x1b[38;2;126;190;132m█\x1b[39m\x1b[38;2;122;191;134m█\x1b[39m\x1b[38;2;119;191;137m█\x1b[39m\x1b[38;2;115;191;140m█\x1b[39m\x1b[38;2;111;191;142m█\x1b[39m\x1b[38;2;107;191;145m█\x1b[39m\x1b[38;2;103;191;148m╗\x1b[39m\x1b[38;2;99;191;150m \x1b[39m\x1b[38;2;95;191;153m█\x1b[39m\x1b[38;2;92;191;156m█\x1b[39m\x1b[38;2;88;192;158m╗\x1b[39m\x1b[38;2;84;192;161m \x1b[39m\x1b[38;2;80;192;163m \x1b[39m\x1b[38;2;76;192;166m█\x1b[39m\x1b[38;2;72;192;169m█\x1b[39m\x1b[38;2;69;192;171m╗\x1b[39m\x1b[38;2;65;192;174m \x1b[39m\x1b[38;2;61;192;177m█\x1b[39m\x1b[38;2;57;192;179m█\x1b[39m\x1b[38;2;53;192;182m█\x1b[39m\x1b[38;2;49;193;184m█\x1b[39m\x1b[38;2;46;193;187m█\x1b[39m\x1b[38;2;42;193;190m█\x1b[39m\x1b[38;2;38;193;192m╗\x1b[39m\n" +
+        "\x1b[38;2;253;187;45m█\x1b[39m\x1b[38;2;249;187;48m█\x1b[39m\x1b[38;2;245;187;50m█\x1b[39m\x1b[38;2;241;187;53m█\x1b[39m\x1b[38;2;238;187;56m╗\x1b[39m\x1b[38;2;234;188;58m \x1b[39m\x1b[38;2;230;188;61m \x1b[39m\x1b[38;2;226;188;63m█\x1b[39m\x1b[38;2;222;188;66m█\x1b[39m\x1b[38;2;218;188;69m║\x1b[39m\x1b[38;2;215;188;71m█\x1b[39m\x1b[38;2;211;188;74m█\x1b[39m\x1b[38;2;207;188;77m╔\x1b[39m\x1b[38;2;203;188;79m═\x1b[39m\x1b[38;2;199;188;82m═\x1b[39m\x1b[38;2;195;189;84m█\x1b[39m\x1b[38;2;192;189;87m█\x1b[39m\x1b[38;2;188;189;90m╗\x1b[39m\x1b[38;2;184;189;92m█\x1b[39m\x1b[38;2;180;189;95m█\x1b[39m\x1b[38;2;176;189;98m█\x1b[39m\x1b[38;2;172;189;100m█\x1b[39m\x1b[38;2;168;189;103m╗\x1b[39m\x1b[38;2;165;189;106m \x1b[39m\x1b[38;2;161;190;108m█\x1b[39m\x1b[38;2;157;190;111m█\x1b[39m\x1b[38;2;153;190;113m█\x1b[39m\x1b[38;2;149;190;116m█\x1b[39m\x1b[38;2;145;190;119m║\x1b[39m\x1b[38;2;142;190;121m \x1b[39m\x1b[38;2;138;190;124m \x1b[39m\x1b[38;2;134;190;127m \x1b[39m\x1b[38;2;130;190;129m \x1b[39m\x1b[38;2;126;190;132m█\x1b[39m\x1b[38;2;122;191;134m█\x1b[39m\x1b[38;2;119;191;137m╔\x1b[39m\x1b[38;2;115;191;140m═\x1b[39m\x1b[38;2;111;191;142m═\x1b[39m\x1b[38;2;107;191;145m█\x1b[39m\x1b[38;2;103;191;148m█\x1b[39m\x1b[38;2;99;191;150m╗\x1b[39m\x1b[38;2;95;191;153m█\x1b[39m\x1b[38;2;92;191;156m█\x1b[39m\x1b[38;2;88;192;158m║\x1b[39m\x1b[38;2;84;192;161m \x1b[39m\x1b[38;2;80;192;163m█\x1b[39m\x1b[38;2;76;192;166m█\x1b[39m\x1b[38;2;72;192;169m╔\x1b[39m\x1b[38;2;69;192;171m╝\x1b[39m\x1b[38;2;65;192;174m█\x1b[39m\x1b[38;2;61;192;177m█\x1b[39m\x1b[38;2;57;192;179m╔\x1b[39m\x1b[38;2;53;192;182m═\x1b[39m\x1b[38;2;49;193;184m═\x1b[39m\x1b[38;2;46;193;187m═\x1b[39m\x1b[38;2;42;193;190m═\x1b[39m\x1b[38;2;38;193;192m╝\x1b[39m\n" +
+        "\x1b[38;2;253;187;45m█\x1b[39m\x1b[38;2;249;187;48m█\x1b[39m\x1b[38;2;245;187;50m╔\x1b[39m\x1b[38;2;241;187;53m█\x1b[39m\x1b[38;2;238;187;56m█\x1b[39m\x1b[38;2;234;188;58m╗\x1b[39m\x1b[38;2;230;188;61m \x1b[39m\x1b[38;2;226;188;63m█\x1b[39m\x1b[38;2;222;188;66m█\x1b[39m\x1b[38;2;218;188;69m║\x1b[39m\x1b[38;2;215;188;71m█\x1b[39m\x1b[38;2;211;188;74m█\x1b[39m\x1b[38;2;207;188;77m█\x1b[39m\x1b[38;2;203;188;79m█\x1b[39m\x1b[38;2;199;188;82m█\x1b[39m\x1b[38;2;195;189;84m█\x1b[39m\x1b[38;2;192;189;87m╔\x1b[39m\x1b[38;2;188;189;90m╝\x1b[39m\x1b[38;2;184;189;92m█\x1b[39m\x1b[38;2;180;189;95m█\x1b[39m\x1b[38;2;176;189;98m╔\x1b[39m\x1b[38;2;172;189;100m█\x1b[39m\x1b[38;2;168;189;103m█\x1b[39m\x1b[38;2;165;189;106m█\x1b[39m\x1b[38;2;161;190;108m█\x1b[39m\x1b[38;2;157;190;111m╔\x1b[39m\x1b[38;2;153;190;113m█\x1b[39m\x1b[38;2;149;190;116m█\x1b[39m\x1b[38;2;145;190;119m║\x1b[39m\x1b[38;2;142;190;121m \x1b[39m\x1b[38;2;138;190;124m \x1b[39m\x1b[38;2;134;190;127m \x1b[39m\x1b[38;2;130;190;129m \x1b[39m\x1b[38;2;126;190;132m█\x1b[39m\x1b[38;2;122;191;134m█\x1b[39m\x1b[38;2;119;191;137m█\x1b[39m\x1b[38;2;115;191;140m█\x1b[39m\x1b[38;2;111;191;142m█\x1b[39m\x1b[38;2;107;191;145m█\x1b[39m\x1b[38;2;103;191;148m╔\x1b[39m\x1b[38;2;99;191;150m╝\x1b[39m\x1b[38;2;95;191;153m█\x1b[39m\x1b[38;2;92;191;156m█\x1b[39m\x1b[38;2;88;192;158m█\x1b[39m\x1b[38;2;84;192;161m█\x1b[39m\x1b[38;2;80;192;163m█\x1b[39m\x1b[38;2;76;192;166m╔\x1b[39m\x1b[38;2;72;192;169m╝\x1b[39m\x1b[38;2;69;192;171m \x1b[39m\x1b[38;2;65;192;174m█\x1b[39m\x1b[38;2;61;192;177m█\x1b[39m\x1b[38;2;57;192;179m║\x1b[39m\x1b[38;2;53;192;182m \x1b[39m\x1b[38;2;49;193;184m \x1b[39m\x1b[38;2;46;193;187m█\x1b[39m\x1b[38;2;42;193;190m█\x1b[39m\x1b[38;2;38;193;192m█\x1b[39m\x1b[38;2;34;193;195m╗\x1b[39m\n" +
+        "\x1b[38;2;253;187;45m█\x1b[39m\x1b[38;2;249;187;48m█\x1b[39m\x1b[38;2;245;187;50m║\x1b[39m\x1b[38;2;241;187;53m╚\x1b[39m\x1b[38;2;238;187;56m█\x1b[39m\x1b[38;2;234;188;58m█\x1b[39m\x1b[38;2;230;188;61m╗\x1b[39m\x1b[38;2;226;188;63m█\x1b[39m\x1b[38;2;222;188;66m█\x1b[39m\x1b[38;2;218;188;69m║\x1b[39m\x1b[38;2;215;188;71m█\x1b[39m\x1b[38;2;211;188;74m█\x1b[39m\x1b[38;2;207;188;77m╔\x1b[39m\x1b[38;2;203;188;79m═\x1b[39m\x1b[38;2;199;188;82m═\x1b[39m\x1b[38;2;195;189;84m═\x1b[39m\x1b[38;2;192;189;87m╝\x1b[39m\x1b[38;2;188;189;90m \x1b[39m\x1b[38;2;184;189;92m█\x1b[39m\x1b[38;2;180;189;95m█\x1b[39m\x1b[38;2;176;189;98m║\x1b[39m\x1b[38;2;172;189;100m╚\x1b[39m\x1b[38;2;168;189;103m█\x1b[39m\x1b[38;2;165;189;106m█\x1b[39m\x1b[38;2;161;190;108m╔\x1b[39m\x1b[38;2;157;190;111m╝\x1b[39m\x1b[38;2;153;190;113m█\x1b[39m\x1b[38;2;149;190;116m█\x1b[39m\x1b[38;2;145;190;119m║\x1b[39m\x1b[38;2;142;190;121m \x1b[39m\x1b[38;2;138;190;124m \x1b[39m\x1b[38;2;134;190;127m \x1b[39m\x1b[38;2;130;190;129m \x1b[39m\x1b[38;2;126;190;132m█\x1b[39m\x1b[38;2;122;191;134m█\x1b[39m\x1b[38;2;119;191;137m╔\x1b[39m\x1b[38;2;115;191;140m═\x1b[39m\x1b[38;2;111;191;142m═\x1b[39m\x1b[38;2;107;191;145m═\x1b[39m\x1b[38;2;103;191;148m╝\x1b[39m\x1b[38;2;99;191;150m \x1b[39m\x1b[38;2;95;191;153m█\x1b[39m\x1b[38;2;92;191;156m█\x1b[39m\x1b[38;2;88;192;158m╔\x1b[39m\x1b[38;2;84;192;161m═\x1b[39m\x1b[38;2;80;192;163m█\x1b[39m\x1b[38;2;76;192;166m█\x1b[39m\x1b[38;2;72;192;169m╗\x1b[39m\x1b[38;2;69;192;171m \x1b[39m\x1b[38;2;65;192;174m█\x1b[39m\x1b[38;2;61;192;177m█\x1b[39m\x1b[38;2;57;192;179m║\x1b[39m\x1b[38;2;53;192;182m \x1b[39m\x1b[38;2;49;193;184m \x1b[39m\x1b[38;2;46;193;187m \x1b[39m\x1b[38;2;42;193;190m█\x1b[39m\x1b[38;2;38;193;192m█\x1b[39m\x1b[38;2;34;193;195m║\x1b[39m\n" +
+        "\x1b[38;2;253;187;45m█\x1b[39m\x1b[38;2;249;187;48m█\x1b[39m\x1b[38;2;245;187;50m║\x1b[39m\x1b[38;2;241;187;53m \x1b[39m\x1b[38;2;238;187;56m╚\x1b[39m\x1b[38;2;234;188;58m█\x1b[39m\x1b[38;2;230;188;61m█\x1b[39m\x1b[38;2;226;188;63m█\x1b[39m\x1b[38;2;222;188;66m█\x1b[39m\x1b[38;2;218;188;69m║\x1b[39m\x1b[38;2;215;188;71m█\x1b[39m\x1b[38;2;211;188;74m█\x1b[39m\x1b[38;2;207;188;77m║\x1b[39m\x1b[38;2;203;188;79m \x1b[39m\x1b[38;2;199;188;82m \x1b[39m\x1b[38;2;195;189;84m \x1b[39m\x1b[38;2;192;189;87m \x1b[39m\x1b[38;2;188;189;90m \x1b[39m\x1b[38;2;184;189;92m█\x1b[39m\x1b[38;2;180;189;95m█\x1b[39m\x1b[38;2;176;189;98m║\x1b[39m\x1b[38;2;172;189;100m \x1b[39m\x1b[38;2;168;189;103m╚\x1b[39m\x1b[38;2;165;189;106m═\x1b[39m\x1b[38;2;161;190;108m╝\x1b[39m\x1b[38;2;157;190;111m \x1b[39m\x1b[38;2;153;190;113m█\x1b[39m\x1b[38;2;149;190;116m█\x1b[39m\x1b[38;2;145;190;119m║\x1b[39m\x1b[38;2;142;190;121m \x1b[39m\x1b[38;2;138;190;124m \x1b[39m\x1b[38;2;134;190;127m \x1b[39m\x1b[38;2;130;190;129m \x1b[39m\x1b[38;2;126;190;132m█\x1b[39m\x1b[38;2;122;191;134m█\x1b[39m\x1b[38;2;119;191;137m║\x1b[39m\x1b[38;2;115;191;140m \x1b[39m\x1b[38;2;111;191;142m \x1b[39m\x1b[38;2;107;191;145m \x1b[39m\x1b[38;2;103;191;148m \x1b[39m\x1b[38;2;99;191;150m \x1b[39m\x1b[38;2;95;191;153m█\x1b[39m\x1b[38;2;92;191;156m█\x1b[39m\x1b[38;2;88;192;158m║\x1b[39m\x1b[38;2;84;192;161m \x1b[39m\x1b[38;2;80;192;163m \x1b[39m\x1b[38;2;76;192;166m█\x1b[39m\x1b[38;2;72;192;169m█\x1b[39m\x1b[38;2;69;192;171m╗\x1b[39m\x1b[38;2;65;192;174m╚\x1b[39m\x1b[38;2;61;192;177m█\x1b[39m\x1b[38;2;57;192;179m█\x1b[39m\x1b[38;2;53;192;182m█\x1b[39m\x1b[38;2;49;193;184m█\x1b[39m\x1b[38;2;46;193;187m█\x1b[39m\x1b[38;2;42;193;190m█\x1b[39m\x1b[38;2;38;193;192m╔\x1b[39m\x1b[38;2;34;193;195m╝\x1b[39m\n" +
+        "\x1b[38;2;253;187;45m╚\x1b[39m\x1b[38;2;249;187;48m═\x1b[39m\x1b[38;2;245;187;50m╝\x1b[39m\x1b[38;2;241;187;53m \x1b[39m\x1b[38;2;238;187;56m \x1b[39m\x1b[38;2;234;188;58m╚\x1b[39m\x1b[38;2;230;188;61m═\x1b[39m\x1b[38;2;226;188;63m═\x1b[39m\x1b[38;2;222;188;66m═\x1b[39m\x1b[38;2;218;188;69m╝\x1b[39m\x1b[38;2;215;188;71m╚\x1b[39m\x1b[38;2;211;188;74m═\x1b[39m\x1b[38;2;207;188;77m╝\x1b[39m\x1b[38;2;203;188;79m \x1b[39m\x1b[38;2;199;188;82m \x1b[39m\x1b[38;2;195;189;84m \x1b[39m\x1b[38;2;192;189;87m \x1b[39m\x1b[38;2;188;189;90m \x1b[39m\x1b[38;2;184;189;92m╚\x1b[39m\x1b[38;2;180;189;95m═\x1b[39m\x1b[38;2;176;189;98m╝\x1b[39m\x1b[38;2;172;189;100m \x1b[39m\x1b[38;2;168;189;103m \x1b[39m\x1b[38;2;165;189;106m \x1b[39m\x1b[38;2;161;190;108m \x1b[39m\x1b[38;2;157;190;111m \x1b[39m\x1b[38;2;153;190;113m╚\x1b[39m\x1b[38;2;149;190;116m═\x1b[39m\x1b[38;2;145;190;119m╝\x1b[39m\x1b[38;2;142;190;121m \x1b[39m\x1b[38;2;138;190;124m \x1b[39m\x1b[38;2;134;190;127m \x1b[39m\x1b[38;2;130;190;129m \x1b[39m\x1b[38;2;126;190;132m╚\x1b[39m\x1b[38;2;122;191;134m═\x1b[39m\x1b[38;2;119;191;137m╝\x1b[39m\x1b[38;2;115;191;140m \x1b[39m\x1b[38;2;111;191;142m \x1b[39m\x1b[38;2;107;191;145m \x1b[39m\x1b[38;2;103;191;148m \x1b[39m\x1b[38;2;99;191;150m \x1b[39m\x1b[38;2;95;191;153m╚\x1b[39m\x1b[38;2;92;191;156m═\x1b[39m\x1b[38;2;88;192;158m╝\x1b[39m\x1b[38;2;84;192;161m \x1b[39m\x1b[38;2;80;192;163m \x1b[39m\x1b[38;2;76;192;166m╚\x1b[39m\x1b[38;2;72;192;169m═\x1b[39m\x1b[38;2;69;192;171m╝\x1b[39m\x1b[38;2;65;192;174m \x1b[39m\x1b[38;2;61;192;177m╚\x1b[39m\x1b[38;2;57;192;179m═\x1b[39m\x1b[38;2;53;192;182m═\x1b[39m\x1b[38;2;49;193;184m═\x1b[39m\x1b[38;2;46;193;187m═\x1b[39m\x1b[38;2;42;193;190m═\x1b[39m\x1b[38;2;38;193;192m╝\x1b[39m\n"
+    );
+
+    // Display version
+    console.log(`\x1b[90mVersion: v${VERSION}\x1b[0m\n`);
 
     clack.intro("🚀 Create NPM Package");
 
@@ -218,187 +250,194 @@ program
       let initGit: boolean;
       let setupCI: boolean;
       let setupCD: boolean;
+      let useCodecov: boolean;
+      let useDependabot: boolean;
 
-      // Step 2: Choose preset or custom configuration
+      // Step 2: Configuration (use defaults or ask questions)
       if (useDefaults) {
-        // Use "library" preset defaults when --yes flag is used
+        // Use sensible defaults when --yes flag is used
         language = "typescript";
         moduleType = "esm";
         testRunner = "vitest";
         useLinting = true;
         useChangesets = false;
         initGit = false;
-        setupCI = true; // Auto-enable CI when tests are included
+        setupCI = true;
         setupCD = false;
+        useCodecov = false;
+        useDependabot = false;
       } else {
-        const preset = handleCancel(
+        // Ask configuration questions
+        // TypeScript is the default (first option)
+        language = handleCancel(
           await clack.select({
-            message: "Choose a preset or customize:",
+            message: "Which language?",
             options: [
               {
-                value: "library" as const,
-                label: "Library",
-                hint: "TypeScript + ESM + Vitest",
+                value: "typescript",
+                label: "TypeScript",
+                hint: "Recommended - Modern standard",
               },
               {
-                value: "cli" as const,
-                label: "CLI Tool",
-                hint: "TypeScript + ESM + No tests",
-              },
-              {
-                value: "legacy" as const,
-                label: "Legacy",
-                hint: "JavaScript + CommonJS",
-              },
-              {
-                value: "custom" as const,
-                label: "Custom",
-                hint: "I'll choose everything",
+                value: "javascript",
+                label: "JavaScript",
+                hint: "Simple projects only",
               },
             ],
           })
-        ) as "library" | "cli" | "legacy" | "custom";
+        ) as "typescript" | "javascript";
 
-        // Apply preset or ask custom questions
-        if (preset === "library") {
-          language = "typescript";
-          moduleType = "esm";
-          testRunner = "vitest";
-          useLinting = true;
-          useChangesets = false;
-          initGit = false;
-          setupCI = true; // Auto-enable CI for library preset with tests
-          setupCD = false;
-        } else if (preset === "cli") {
-          language = "typescript";
-          moduleType = "esm";
-          testRunner = "none";
-          useLinting = true;
-          useChangesets = false;
-          initGit = false;
-          setupCI = false; // No tests, no CI by default
-          setupCD = false;
-        } else if (preset === "legacy") {
-          language = "javascript";
-          moduleType = "commonjs";
-          testRunner = "none";
-          useLinting = false;
-          useChangesets = false;
-          initGit = false;
-          setupCI = false; // Legacy preset, no CI
-          setupCD = false;
-        } else {
-          // Custom configuration
-          language = handleCancel(
-            await clack.select({
-              message: "Which language?",
-              options: [
-                {
-                  value: "typescript",
-                  label: "TypeScript",
-                  hint: "Recommended",
-                },
-                { value: "javascript", label: "JavaScript" },
-              ],
-            })
-          ) as "typescript" | "javascript";
+        // Warn if JavaScript is selected
+        if (language === "javascript") {
+          clack.note(
+            "JavaScript packages won't have type definitions.\n" +
+              "Consider using TypeScript for better IDE support and type safety.",
+            "⚠️  JavaScript Selected"
+          );
+        }
 
-          moduleType = handleCancel(
-            await clack.select({
-              message: "Which module format?",
-              options: [
-                {
-                  value: "esm",
-                  label: "ESM only",
-                  hint: "Node 14+, modern bundlers",
-                },
-                {
-                  value: "dual",
-                  label: "ESM + CommonJS",
-                  hint: "Support older Node versions",
-                },
-                {
-                  value: "commonjs",
-                  label: "CommonJS only",
-                  hint: "Legacy projects only",
-                },
-              ],
-            })
-          ) as "esm" | "commonjs" | "dual";
+        moduleType = handleCancel(
+          await clack.select({
+            message: "Which module format?",
+            options: [
+              {
+                value: "esm",
+                label: "ESM only",
+                hint: "Node 14+, modern bundlers",
+              },
+              {
+                value: "dual",
+                label: "ESM + CommonJS",
+                hint: "Support older Node versions",
+              },
+              {
+                value: "commonjs",
+                label: "CommonJS only",
+                hint: "Legacy projects only",
+              },
+            ],
+          })
+        ) as "esm" | "commonjs" | "dual";
 
-          // Warn about Jest + ESM
-          if (moduleType === "esm") {
-            clack.note(
-              "For ESM projects, Vitest is recommended as Jest has limited ESM support.",
-              "Note"
-            );
-          }
+        // Warn about Jest + ESM
+        if (moduleType === "esm") {
+          clack.note(
+            "For ESM projects, Vitest is recommended as Jest has limited ESM support.",
+            "Note"
+          );
+        }
 
-          testRunner = handleCancel(
-            await clack.select({
-              message: "Which test runner?",
-              options: [
-                { value: "vitest", label: "Vitest", hint: "Fast & modern" },
-                { value: "jest", label: "Jest", hint: "Battle-tested" },
-                { value: "none", label: "None" },
-              ],
-            })
-          ) as "vitest" | "jest" | "none";
+        testRunner = handleCancel(
+          await clack.select({
+            message: "Which test runner?",
+            options: [
+              { value: "vitest", label: "Vitest", hint: "Fast & modern" },
+              { value: "jest", label: "Jest", hint: "Battle-tested" },
+              { value: "none", label: "None" },
+            ],
+          })
+        ) as "vitest" | "jest" | "none";
 
-          useLinting = handleCancel(
-            await clack.confirm({
-              message: "Initialize ESLint + Prettier?",
-              initialValue: true,
-            })
+        useLinting = handleCancel(
+          await clack.confirm({
+            message: "Initialize ESLint + Prettier?",
+            initialValue: true,
+          })
+        );
+
+        initGit = handleCancel(
+          await clack.confirm({
+            message: "Initialize a new git repository?",
+            initialValue: false,
+          })
+        );
+
+        // Ask about CI/CD setup
+        setupCI = handleCancel(
+          await clack.confirm({
+            message: "Set up GitHub Actions CI? (runs tests on every push/PR)",
+            initialValue: testRunner !== "none",
+          })
+        );
+
+        if (setupCI) {
+          // Show CD information BEFORE asking
+          clack.note(
+            "Changesets automates version management and npm publishing.\n\n" +
+              "Benefits:\n" +
+              "• Automatically creates version bump PRs\n" +
+              "• Generates changelogs from your commit messages\n" +
+              "• Publishes to npm when PR is merged\n" +
+              "• No manual version bumping needed\n\n" +
+              "How it works:\n" +
+              "1. Run: npm run changeset (describe your changes)\n" +
+              '2. Changesets bot creates a "Version Packages" PR\n' +
+              "3. Merge PR → automatically publishes to npm\n\n" +
+              "Recommended: Skip for beginners (can set up later)\n" +
+              "Requires: NPM_TOKEN secret in GitHub repository",
+            "Automated Publishing (CD)"
           );
 
-          useChangesets = handleCancel(
+          setupCD = handleCancel(
             await clack.confirm({
-              message: "Set up automated version management & releases?",
+              message: "Set up automated publishing to npm? (CD workflow)",
               initialValue: false,
             })
           );
 
-          if (useChangesets) {
-            clack.note(
-              "This will set up Changesets and GitHub Actions for automated releases.",
-              "Changesets"
-            );
+          if (setupCD) {
+            useChangesets = true; // Enable Changesets when CD is requested
+          } else {
+            useChangesets = false;
           }
 
-          initGit = handleCancel(
-            await clack.confirm({
-              message: "Initialize a new git repository?",
-              initialValue: false,
-            })
-          );
+          // Ask about Codecov only if tests are configured
+          if (testRunner !== "none") {
+            clack.note(
+              "Codecov tracks test coverage over time and shows coverage in PRs.\n\n" +
+                "Benefits:\n" +
+                "• Visualize coverage trends with graphs and badges\n" +
+                "• See coverage changes in pull requests\n" +
+                "• Identify untested code paths\n\n" +
+                "Recommended: Skip for beginners (can be added later)\n" +
+                "Requires: CODECOV_TOKEN secret in GitHub repository",
+              "Test Coverage Tracking"
+            );
 
-          // Ask about CI/CD setup
-          setupCI = handleCancel(
-            await clack.confirm({
-              message:
-                "Set up GitHub Actions CI? (runs tests on every push/PR)",
-              initialValue: testRunner !== "none",
-            })
-          );
-
-          if (setupCI) {
-            setupCD = handleCancel(
+            useCodecov = handleCancel(
               await clack.confirm({
-                message: "Also set up automated npm publishing? (CD workflow)",
+                message: "Upload test coverage to Codecov?",
                 initialValue: false,
               })
             );
-
-            if (setupCD) {
-              clack.note(
-                "You'll need to add NPM_TOKEN to your GitHub repository secrets.\nSee: https://docs.npmjs.com/creating-and-viewing-access-tokens",
-                "Setup Required"
-              );
-            }
           } else {
-            setupCD = false;
+            useCodecov = false; // No tests, no coverage
           }
+
+          // Ask about Dependabot (always available if CI is enabled)
+          clack.note(
+            "Dependabot automatically creates PRs to update dependencies.\n\n" +
+              "Benefits:\n" +
+              "• Keep dependencies up-to-date automatically\n" +
+              "• Get security vulnerability alerts and fixes\n" +
+              "• Reduce maintenance burden\n" +
+              "• Configure update frequency (daily/weekly/monthly)\n\n" +
+              "Recommended: Skip for beginners (can add noise with many PRs)\n" +
+              "Note: Free for all GitHub repositories, no secrets needed",
+            "Automated Dependency Updates"
+          );
+
+          useDependabot = handleCancel(
+            await clack.confirm({
+              message: "Set up Dependabot for automated dependency updates?",
+              initialValue: false,
+            })
+          );
+        } else {
+          setupCD = false;
+          useChangesets = false;
+          useCodecov = false; // No CI, no Codecov
+          useDependabot = false; // No CI, no Dependabot
         }
       }
 
@@ -567,6 +606,8 @@ program
         initGit,
         setupCI,
         setupCD,
+        useCodecov,
+        useDependabot,
         packageManager,
         description: description || undefined,
         author: author || undefined,
@@ -582,9 +623,22 @@ Language: ${config.language === "typescript" ? "TypeScript" : "JavaScript"}
 Module format: ${config.moduleType.toUpperCase()}
 Test runner: ${config.testRunner === "none" ? "None" : config.testRunner}
 Linting: ${config.useLinting ? "Yes (ESLint + Prettier)" : "No"}
-Changesets: ${config.useChangesets ? "Yes" : "No"}
 Git: ${config.initGit ? "Yes" : "No"}
-CI/CD: ${config.setupCI ? (config.setupCD ? "CI + CD" : "CI only") : "No"}
+CI/CD: ${
+            config.setupCI
+              ? config.setupCD
+                ? "CI + CD (with Changesets)"
+                : "CI only"
+              : "No"
+          }${
+            config.setupCI && config.testRunner !== "none"
+              ? `\nCodecov: ${config.useCodecov ? "Yes" : "No"}`
+              : ""
+          }${
+            config.setupCI
+              ? `\nDependabot: ${config.useDependabot ? "Yes" : "No"}`
+              : ""
+          }
 Package Manager: ${config.packageManager}${
             config.description ? `\nDescription: ${config.description}` : ""
           }${config.author ? `\nAuthor: ${config.author}` : ""}${
@@ -661,8 +715,8 @@ Package Manager: ${config.packageManager}${
         if (config.setupCI) {
           clack.log.info(`    .github/workflows/ci.yml`);
         }
-        if (config.setupCD) {
-          clack.log.info(`    .github/workflows/publish.yml`);
+        if (config.useDependabot) {
+          clack.log.info(`    .github/dependabot.yml`);
         }
         clack.outro("✨ Dry run complete!");
         return;
@@ -1025,9 +1079,10 @@ describe('add', () => {
     );
   }
 
-  // GitHub Actions workflows
-  if (config.useChangesets || config.setupCI || config.setupCD) {
-    const workflowDir = join(targetDir, ".github", "workflows");
+  // GitHub Actions workflows and Dependabot
+  if (config.useChangesets || config.setupCI || config.useDependabot) {
+    const githubDir = join(targetDir, ".github");
+    const workflowDir = join(githubDir, "workflows");
     await mkdir(workflowDir, { recursive: true });
 
     // Changesets release workflow
@@ -1078,11 +1133,11 @@ jobs:
       await writeFile(join(workflowDir, "ci.yml"), generateCIWorkflow(config));
     }
 
-    // CD workflow
-    if (config.setupCD) {
+    // Dependabot configuration
+    if (config.useDependabot) {
       await writeFile(
-        join(workflowDir, "publish.yml"),
-        generateCDWorkflow(config)
+        join(githubDir, "dependabot.yml"),
+        generateDependabotConfig()
       );
     }
   }

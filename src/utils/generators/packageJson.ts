@@ -51,8 +51,10 @@ export function generatePackageJson(config: ProjectConfig): Record<string, any> 
     pkg.homepage = `https://github.com/${config.githubUsername}/${config.packageName}#readme`;
   }
 
-  // Add release script if using changesets
+  // Add changeset scripts if using changesets
   if (config.useChangesets) {
+    pkg.scripts.changeset = 'changeset';
+    pkg.scripts['version-packages'] = 'changeset version';
     pkg.scripts.release = 'changeset publish';
   }
 

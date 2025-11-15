@@ -47,13 +47,16 @@ export function generateCIWorkflow(config: ProjectConfig): string {
   steps.push(`      - name: Build
         run: npm run build`);
 
-  // Add coverage upload only for Node 20 (avoid duplicate uploads)
-  if (config.testRunner !== 'none') {
+  // Add coverage upload only if Codecov is enabled and tests are configured
+  // Only upload for Node 20 to avoid duplicate uploads
+  if (config.testRunner !== 'none' && config.useCodecov) {
     steps.push(`      - name: Upload coverage to Codecov
         if: matrix.node-version == '20'
         uses: codecov/codecov-action@v4
+        continue-on-error: true
         with:
-          token: \${{ secrets.CODECOV_TOKEN }}`);
+          token: \${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false`);
   }
 
   return `name: CI
@@ -76,56 +79,20 @@ ${steps.join('\n\n')}
 }
 
 /**
- * Generates a CD workflow for GitHub Actions
- * Publishes to npm when a GitHub release is created
+ * Generates Dependabot configuration for automated dependency updates
+ * Creates a .github/dependabot.yml file that checks npm dependencies weekly
  */
-export function generateCDWorkflow(config: ProjectConfig): string {
-  const steps: string[] = [
-    `      - name: Checkout code
-        uses: actions/checkout@v4`,
-
-    `      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: 'https://registry.npmjs.org'`,
-
-    `      - name: Install dependencies
-        run: npm install`,
-  ];
-
-  // Add typecheck for TypeScript projects
-  if (config.language === 'typescript') {
-    steps.push(`      - name: Type check
-        run: npm run typecheck`);
-  }
-
-  // Add tests if configured
-  if (config.testRunner !== 'none') {
-    steps.push(`      - name: Run tests
-        run: npm test`);
-  }
-
-  // Add build
-  steps.push(`      - name: Build
-        run: npm run build`);
-
-  // Add publish step
-  steps.push(`      - name: Publish to npm
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: \${{ secrets.NPM_TOKEN }}`);
-
-  return `name: Publish
-
-on:
-  release:
-    types: [created]
-
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-${steps.join('\n\n')}
+export function generateDependabotConfig(): string {
+  return `version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "automated"
 `;
 }
+
