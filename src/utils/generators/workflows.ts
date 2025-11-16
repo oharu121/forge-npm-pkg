@@ -96,7 +96,6 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
-      - "automated"
     # Group all development dependencies together
     groups:
        dev-dependencies:
