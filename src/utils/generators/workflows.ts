@@ -38,9 +38,11 @@ export function generateCIWorkflow(config: ProjectConfig): string {
   }
 
   // Add test step if tests are configured
+  // Use coverage in CI if setupCI is enabled, otherwise run regular tests
   if (config.testRunner !== 'none') {
+    const testCommand = config.setupCI ? 'npm run test:coverage' : 'npm test';
     steps.push(`      - name: Run tests
-        run: npm test`);
+        run: ${testCommand}`);
   }
 
   // Add build step

@@ -165,9 +165,11 @@ function generateScripts(config: ProjectConfig): Record<string, string> {
   if (config.testRunner === 'vitest') {
     scripts.test = 'vitest run';
     scripts['test:watch'] = 'vitest';
+    scripts['test:coverage'] = 'vitest run --coverage';
   } else if (config.testRunner === 'jest') {
     scripts.test = 'jest';
     scripts['test:watch'] = 'jest --watch';
+    scripts['test:coverage'] = 'jest --coverage';
   }
 
   // Linting scripts
@@ -210,6 +212,10 @@ function generateDevDependencies(config: ProjectConfig): Record<string, string> 
   // Test runners
   if (config.testRunner === 'vitest') {
     deps.vitest = '^1.2.0';
+    // Add coverage provider when CI is enabled
+    if (config.setupCI) {
+      deps['@vitest/coverage-v8'] = '^1.2.0';
+    }
   } else if (config.testRunner === 'jest') {
     deps.jest = '^29.7.0';
     if (config.language === 'typescript') {

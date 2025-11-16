@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1]
+
+### Added
+
+- `test:coverage` script automatically added to generated projects when CI is enabled
+- `@vitest/coverage-v8` package automatically installed when using Vitest with CI enabled
+- Test coverage collection in CI workflows - runs `npm run test:coverage` instead of `npm test`
+
+### Changed
+
+- CI workflows now collect test coverage by default when tests are configured
+- Coverage reports are generated on every CI run for better visibility into test quality
+
 ## [1.2.0] - 2025-11-16
 
 ### Added

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateCIWorkflow } from './workflows';
+import { generateCIWorkflow, generateDependabotConfig } from './workflows';
 import type { ProjectConfig } from './types';
 
 describe('generateCIWorkflow', () => {
@@ -26,7 +26,7 @@ describe('generateCIWorkflow', () => {
     expect(workflow).toContain('node-version: [18, 20, 22]');
     expect(workflow).toContain('npm run typecheck');
     expect(workflow).toContain('npm run lint');
-    expect(workflow).toContain('npm test');
+    expect(workflow).toContain('npm run test:coverage');
     expect(workflow).toContain('npm run build');
     expect(workflow).toContain('codecov');
   });
@@ -47,7 +47,7 @@ describe('generateCIWorkflow', () => {
 
     expect(workflow).not.toContain('npm run typecheck');
     expect(workflow).toContain('npm run lint');
-    expect(workflow).toContain('npm test');
+    expect(workflow).toContain('npm run test:coverage');
   });
 
   it('should not include lint step when linting is disabled', () => {
@@ -66,7 +66,7 @@ describe('generateCIWorkflow', () => {
 
     expect(workflow).not.toContain('npm run lint');
     expect(workflow).toContain('npm run typecheck');
-    expect(workflow).toContain('npm test');
+    expect(workflow).toContain('npm run test:coverage');
   });
 
   it('should not include test step when tests are disabled', () => {
@@ -85,6 +85,7 @@ describe('generateCIWorkflow', () => {
     const workflow = generateCIWorkflow(config);
 
     expect(workflow).not.toContain('npm test');
+    expect(workflow).not.toContain('npm run test:coverage');
     expect(workflow).not.toContain('codecov');
     expect(workflow).toContain('npm run typecheck');
     expect(workflow).toContain('npm run build');
@@ -105,8 +106,22 @@ describe('generateCIWorkflow', () => {
 
     const workflow = generateCIWorkflow(config);
 
-    expect(workflow).toContain('npm test');
+    expect(workflow).toContain('npm run test:coverage');
     expect(workflow).not.toContain('codecov');
     expect(workflow).toContain('npm run build');
+  });
+});
+
+describe('generateDependabotConfig', () => {
+  it('should generate valid Dependabot configuration', () => {
+    const config = generateDependabotConfig();
+
+    expect(config).toContain('version: 2');
+    expect(config).toContain('package-ecosystem: "npm"');
+    expect(config).toContain('directory: "/"');
+    expect(config).toContain('interval: "weekly"');
+    expect(config).toContain('open-pull-requests-limit: 10');
+    expect(config).toContain('dependencies');
+    expect(config).toContain('automated');
   });
 });
