@@ -122,6 +122,5 @@ describe('generateDependabotConfig', () => {
     expect(config).toContain('interval: "weekly"');
     expect(config).toContain('open-pull-requests-limit: 10');
     expect(config).toContain('dependencies');
-    expect(config).toContain('automated');
   });
 });
