@@ -2,6 +2,7 @@
 
 import { Command } from "commander";
 import * as clack from "@clack/prompts";
+import updateNotifier from "update-notifier";
 import { existsSync } from "fs";
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
@@ -17,6 +18,7 @@ import {
   generateJestConfig,
   generateReadme,
   generateGitignore,
+  generateNpmignore,
   generateEditorConfig,
   generateRootIndexJs,
   generateRootIndexMjs,
@@ -42,6 +44,15 @@ const packageJson = JSON.parse(
   readFileSync(join(__dirname, "../package.json"), "utf-8")
 );
 const VERSION = packageJson.version;
+
+// Check for updates (non-blocking, cached once per day)
+updateNotifier({
+  pkg: packageJson,
+  updateCheckInterval: 1000 * 60 * 60 * 24 // Check once per day
+}).notify({
+  isGlobal: true,
+  defer: false
+});
 
 // Constants
 const INITIAL_COMMIT_MESSAGE = "chore: initial commit";
@@ -673,6 +684,7 @@ Package Manager: ${config.packageManager}${
         clack.log.info(`    README.md`);
         clack.log.info(`    .gitignore`);
         if (config.language === "typescript") {
+          clack.log.info(`    .npmignore         # Exclude source files from npm package`);
           clack.log.info(`    tsconfig.json`);
           clack.log.info(`    tsup.config.ts`);
           clack.log.info(
@@ -991,6 +1003,11 @@ describe('add', () => {
 
   await writeFile(join(targetDir, "README.md"), generateReadme(config));
   await writeFile(join(targetDir, ".gitignore"), generateGitignore());
+
+  // Generate .npmignore for TypeScript projects
+  if (config.language === 'typescript') {
+    await writeFile(join(targetDir, ".npmignore"), generateNpmignore(config));
+  }
 
   // TypeScript-specific files
   if (config.language === "typescript") {

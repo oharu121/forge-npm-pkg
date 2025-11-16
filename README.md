@@ -595,6 +595,60 @@ This tool eliminates the guesswork and gives you a production-ready setup in sec
 
 MIT
 
+## Dependency Management Workflow
+
+This project uses Dependabot to automate dependency updates with a smart grouping strategy.
+
+### Dependabot Configuration
+
+Dependencies are grouped for easier management:
+- **Production dependencies**: Individual PRs for careful review (critical changes)
+- **Development dependencies**: Grouped into single weekly PR (reduces noise)
+- **GitHub Actions**: Grouped into single weekly PR
+
+This reduces PR volume while keeping production dependencies separate for safety.
+
+### Handling Dependabot Updates (Solo Developer Workflow)
+
+When Dependabot creates PRs while you're working locally:
+
+1. **Push your local work first**
+   ```bash
+   git add .
+   git commit -m "your changes"
+   git push
+   ```
+
+2. **Merge Dependabot PR on GitHub**
+   - Review and merge via GitHub UI
+   - Don't worry about your local state
+
+3. **Sync your local repository**
+   ```bash
+   npm run sync
+   ```
+
+   This runs: `git pull --rebase && npm install && npm test`
+
+   Or use `npm run sync:quick` to skip tests (faster):
+   ```bash
+   npm run sync:quick
+   ```
+
+4. **If package-lock.json changed, commit and push**
+   ```bash
+   git add package-lock.json
+   git commit -m "chore: update package-lock.json after merge"
+   git push
+   ```
+
+### Why This Workflow Works
+
+- **Push first**: Ensures your work is safe on remote before merging external changes
+- **Merge on GitHub**: Clean, conflict-free merge since you have no local uncommitted work
+- **Sync script**: Automates the pull + install + test sequence
+- **No surprises**: Explicit, transparent, and easy to understand
+
 ## Contributing
 
 Contributions are welcome! Please open an issue or PR.

@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0]
+
+### Added
+
+- Automatic update notifications when a newer version is available (checked once per day, non-blocking)
+- `.npmignore` generation for TypeScript projects to exclude source files from published npm packages
+- `sync` and `sync:quick` npm scripts for streamlined Dependabot workflow (pull + install + test)
+- Dependabot grouping configuration: dev dependencies and GitHub Actions grouped into single weekly PRs
+- Dependency management workflow documentation in README
+
+### Changed
+
+- Dependabot config now groups development dependencies to reduce PR noise (production deps remain separate)
+- Dependabot now monitors GitHub Actions updates in addition to npm dependencies
+- Updated README with simple npm script-based workflow for handling Dependabot updates (solo developer)
+
+### Fixed
+
+- TypeScript projects now properly exclude source files (`src/`, `*.ts`) from npm packages via `.npmignore`
+
 ## [1.4.1]
 
 ### Added

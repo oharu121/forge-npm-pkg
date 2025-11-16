@@ -83,10 +83,12 @@ ${steps.join('\n\n')}
 /**
  * Generates Dependabot configuration for automated dependency updates
  * Creates a .github/dependabot.yml file that checks npm dependencies weekly
+ * Groups dev dependencies together to reduce PR noise
  */
 export function generateDependabotConfig(): string {
   return `version: 2
 updates:
+  # Check for npm dependency updates
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
@@ -95,6 +97,21 @@ updates:
     labels:
       - "dependencies"
       - "automated"
+    # Group all development dependencies together
+    groups:
+       dev-dependencies:
+          dependency-type: "development"
+
+  # Check for GitHub Actions updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Group all actions together
+    groups:
+       actions:
+          patterns:
+            - "*"
 `;
 }
 

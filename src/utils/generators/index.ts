@@ -32,6 +32,7 @@ export { generateVitestConfig, generateJestConfig } from './testing.js';
 // File generators
 export {
   generateGitignore,
+  generateNpmignore,
   generateRootIndexJs,
   generateRootIndexMjs,
   generateRootIndexDts,

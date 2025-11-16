@@ -20,6 +20,3 @@ EXAMPLES.md
 **/*.test.*
 **/*.spec.*
 coverage/
-
-# Keep templates directory - it's needed at runtime!
-# (Don't add templates/ here)

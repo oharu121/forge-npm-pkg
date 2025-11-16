@@ -191,6 +191,12 @@ function generateScripts(config: ProjectConfig): Record<string, string> {
     scripts.prepublishOnly = 'npm run build';
   }
 
+  // Dependency sync scripts (useful for Dependabot workflow)
+  if (config.useDependabot) {
+    scripts.sync = 'git pull --rebase && npm install && npm test';
+    scripts['sync:quick'] = 'git pull --rebase && npm install';
+  }
+
   return scripts;
 }
 

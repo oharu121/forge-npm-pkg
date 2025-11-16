@@ -63,6 +63,53 @@ bun.lockb
 }
 
 /**
+ * Generates .npmignore for TypeScript projects
+ * Only include compiled dist/ and necessary files in npm package
+ */
+export function generateNpmignore(config: ProjectConfig): string {
+  const { language } = config;
+
+  // JavaScript projects don't need .npmignore (no build step)
+  if (language === 'javascript') {
+    return '';
+  }
+
+  // TypeScript projects: exclude source and config files
+  return `# Source files
+src/
+*.ts
+!*.d.ts
+
+# Config files
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
+jest.config.ts
+
+# Development files
+.github/
+.vscode/
+.idea/
+*.log
+
+# Tests
+**/*.test.*
+**/*.spec.*
+coverage/
+
+# Environment
+.env
+.env.*
+
+# Editor files
+*.swp
+*.swo
+*~
+.DS_Store
+`;
+}
+
+/**
  * Generates root index.js that re-exports from dist/
  * This follows the pattern used by axios, express, and jsforce
  * for better IDE autocomplete experience
