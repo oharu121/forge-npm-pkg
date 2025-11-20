@@ -1,8 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { generateCIWorkflow, generateDependabotConfig } from './workflows';
 import type { ProjectConfig } from './types';
+import type { NodeVersionConfig } from '../nodeFetcher';
 
 describe('generateCIWorkflow', () => {
+  const mockNodeConfig: NodeVersionConfig = {
+    minimum: 20,
+    engines: '>=20.0.0',
+    ciMatrix: [20, 22],
+    latestLTS: 22
+  };
+
   it('should generate CI workflow with all steps for TypeScript project with tests and linting', () => {
     const config: ProjectConfig = {
       packageName: 'test-package',
@@ -16,14 +24,14 @@ describe('generateCIWorkflow', () => {
       useCodecov: true, // Enable Codecov for this test
     };
 
-    const workflow = generateCIWorkflow(config);
+    const workflow = generateCIWorkflow(config, mockNodeConfig);
 
     expect(workflow).toContain('name: CI');
     expect(workflow).toContain('on:');
     expect(workflow).toContain('push:');
     expect(workflow).toContain('pull_request:');
     expect(workflow).toContain('matrix:');
-    expect(workflow).toContain('node-version: [18, 20, 22]');
+    expect(workflow).toContain('node-version: [20, 22]');
     expect(workflow).toContain('npm run typecheck');
     expect(workflow).toContain('npm run lint');
     expect(workflow).toContain('npm run test:coverage');
@@ -43,7 +51,7 @@ describe('generateCIWorkflow', () => {
       setupCD: false,
     };
 
-    const workflow = generateCIWorkflow(config);
+    const workflow = generateCIWorkflow(config, mockNodeConfig);
 
     expect(workflow).not.toContain('npm run typecheck');
     expect(workflow).toContain('npm run lint');
@@ -62,7 +70,7 @@ describe('generateCIWorkflow', () => {
       setupCD: false,
     };
 
-    const workflow = generateCIWorkflow(config);
+    const workflow = generateCIWorkflow(config, mockNodeConfig);
 
     expect(workflow).not.toContain('npm run lint');
     expect(workflow).toContain('npm run typecheck');
@@ -82,7 +90,7 @@ describe('generateCIWorkflow', () => {
       useCodecov: false,
     };
 
-    const workflow = generateCIWorkflow(config);
+    const workflow = generateCIWorkflow(config, mockNodeConfig);
 
     expect(workflow).not.toContain('npm test');
     expect(workflow).not.toContain('npm run test:coverage');
@@ -104,7 +112,7 @@ describe('generateCIWorkflow', () => {
       useCodecov: false, // Explicitly disable Codecov
     };
 
-    const workflow = generateCIWorkflow(config);
+    const workflow = generateCIWorkflow(config, mockNodeConfig);
 
     expect(workflow).toContain('npm run test:coverage');
     expect(workflow).not.toContain('codecov');

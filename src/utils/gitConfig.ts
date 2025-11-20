@@ -35,7 +35,7 @@ export function readGitConfig(): GitConfig | null {
     }
 
     return null;
-  } catch (error) {
+  } catch {
     // Git not installed or config not set
     return null;
   }

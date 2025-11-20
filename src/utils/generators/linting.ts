@@ -8,8 +8,8 @@ import type { ProjectConfig } from './types.js';
 /**
  * Generates ESLint configuration
  */
-export function generateEslintConfig(config: ProjectConfig): Record<string, any> {
-  const eslintConfig: Record<string, any> = {
+export function generateEslintConfig(config: ProjectConfig): Record<string, unknown> {
+  const eslintConfig: Record<string, unknown> = {
     env: {
       node: true,
       es2021: true,
@@ -40,7 +40,7 @@ export function generateEslintConfig(config: ProjectConfig): Record<string, any>
 /**
  * Generates Prettier configuration
  */
-export function generatePrettierConfig(): Record<string, any> {
+export function generatePrettierConfig(): Record<string, unknown> {
   return {
     semi: true,
     trailingComma: 'es5',

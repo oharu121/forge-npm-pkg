@@ -45,13 +45,10 @@ const packageJson = JSON.parse(
 );
 const VERSION = packageJson.version;
 
-// Check for updates (non-blocking, cached once per day)
-updateNotifier({
+// Check for updates silently (we'll handle the prompt ourselves)
+const notifier = updateNotifier({
   pkg: packageJson,
   updateCheckInterval: 1000 * 60 * 60 * 24 // Check once per day
-}).notify({
-  isGlobal: true,
-  defer: false
 });
 
 // Constants
@@ -115,10 +112,6 @@ program
   .name("forge-npm-pkg")
   .description("Scaffold a production-ready npm package")
   .argument("[package-name]", "Name of the package to create")
-  .option(
-    "-y, --yes",
-    "Skip prompts and use recommended defaults (TypeScript + Vitest + Linting)"
-  )
   .option("--dry-run", "Show what would be generated without creating files")
   .option("--skip-install", "Skip dependency installation")
   .option(
@@ -127,14 +120,7 @@ program
   )
   .option("--reset-config", "Reset stored user configuration")
   .option("--config", "Show current stored configuration")
-  .option("--typescript", "Use TypeScript")
-  .option("--javascript", "Use JavaScript")
-  .option("--vitest", "Use Vitest for testing")
-  .option("--jest", "Use Jest for testing")
-  .option("--no-tests", "Skip testing setup")
-  .option("--no-lint", "Skip ESLint + Prettier setup")
-  .option("--no-git", "Skip git initialization")
-  .action(async (packageName?: string, options?: any) => {
+  .action(async (packageName?: string, options?: { dryRun?: boolean; skipInstall?: boolean; noSave?: boolean; resetConfig?: boolean; config?: boolean }) => {
     console.clear();
 
     // Display logo banner
@@ -157,6 +143,30 @@ program
 
     // Display version
     console.log(`\x1b[90mVersion: v${VERSION}\x1b[0m\n`);
+
+    // Check for updates BEFORE starting the workflow
+    if (notifier.update) {
+      const { current, latest } = notifier.update;
+
+      clack.note(
+        `Current: ${current}\nLatest:  ${latest}\n\nChangelog: https://github.com/oharu121/forge-npm-pkg/releases/tag/v${latest}`,
+        "⚠️  Update Available"
+      );
+
+      const shouldUpdate = handleCancel(
+        await clack.confirm({
+          message: "Update to latest version before continuing?",
+          initialValue: true
+        })
+      );
+
+      if (shouldUpdate) {
+        clack.log.step("Restarting with latest version...");
+        const args = process.argv.slice(2);
+        execSync(`npx forge-npm-pkg@latest ${args.join(' ')}`, { stdio: 'inherit' });
+        process.exit(0);
+      }
+    }
 
     clack.intro("🚀 Create NPM Package");
 
@@ -186,7 +196,6 @@ program
 
     try {
       const isDryRun = options?.dryRun || false;
-      const useDefaults = options?.yes || false;
       const skipInstall = options?.skipInstall || false;
 
       // Step 1: Get or confirm package name
@@ -201,8 +210,7 @@ program
           })
         );
         finalPackageName = nameInput;
-      } else if (!useDefaults) {
-        // Skip confirmation if using defaults
+      } else {
         const confirmed = handleCancel(
           await clack.confirm({
             message: `Create package "${packageName}"?`,
@@ -228,17 +236,15 @@ program
         clack.log.warn(
           `The package "${finalPackageName}" already exists on npm. You can still create it locally, but you won't be able to publish it with this name.`
         );
-        if (!useDefaults) {
-          const continueAnyway = handleCancel(
-            await clack.confirm({
-              message: "Continue anyway?",
-              initialValue: false,
-            })
-          );
-          if (!continueAnyway) {
-            clack.cancel("Operation cancelled");
-            process.exit(0);
-          }
+        const continueAnyway = handleCancel(
+          await clack.confirm({
+            message: "Continue anyway?",
+            initialValue: false,
+          })
+        );
+        if (!continueAnyway) {
+          clack.cancel("Operation cancelled");
+          process.exit(0);
         }
       }
 
@@ -259,173 +265,158 @@ program
       let useCodecov: boolean;
       let useDependabot: boolean;
 
-      // Step 2: Configuration (use defaults or ask questions)
-      if (useDefaults) {
-        // Use sensible defaults when --yes flag is used
-        language = "typescript";
-        moduleType = "dual";
-        testRunner = "vitest";
-        useLinting = true;
-        initGit = false;
-        setupCI = true;
-        setupCD = false;
-        useCodecov = false;
-        useDependabot = false;
-      } else {
-        // Ask configuration questions
-        // TypeScript is the default (first option)
-        language = handleCancel(
-          await clack.select({
-            message: "Which language?",
-            options: [
-              {
-                value: "typescript",
-                label: "TypeScript",
-                hint: "Recommended - Modern standard",
-              },
-              {
-                value: "javascript",
-                label: "JavaScript",
-                hint: "Simple projects only",
-              },
-            ],
-          })
-        ) as "typescript" | "javascript";
+      // Step 2: Configuration - ask questions
+      // TypeScript is the default (first option)
+      language = handleCancel(
+        await clack.select({
+          message: "Which language?",
+          options: [
+            {
+              value: "typescript",
+              label: "TypeScript",
+              hint: "Recommended - Modern standard",
+            },
+            {
+              value: "javascript",
+              label: "JavaScript",
+              hint: "Simple projects only",
+            },
+          ],
+        })
+      ) as "typescript" | "javascript";
 
-        // Warn if JavaScript is selected
-        if (language === "javascript") {
-          clack.note(
-            "JavaScript packages won't have type definitions.\n" +
-              "Consider using TypeScript for better IDE support and type safety.",
-            "⚠️  JavaScript Selected"
-          );
-        }
+      // Warn if JavaScript is selected
+      if (language === "javascript") {
+        clack.note(
+          "JavaScript packages won't have type definitions.\n" +
+            "Consider using TypeScript for better IDE support and type safety.",
+          "⚠️  JavaScript Selected"
+        );
+      }
 
-        // Always use dual format for maximum compatibility
-        moduleType = "dual";
+      // Always use dual format for maximum compatibility
+      moduleType = "dual";
 
-        testRunner = handleCancel(
-          await clack.select({
-            message: "Which test runner?",
-            options: [
-              { value: "vitest", label: "Vitest", hint: "Fast & modern" },
-              { value: "jest", label: "Jest", hint: "Battle-tested" },
-              { value: "none", label: "None" },
-            ],
-          })
-        ) as "vitest" | "jest" | "none";
+      testRunner = handleCancel(
+        await clack.select({
+          message: "Which test runner?",
+          options: [
+            { value: "vitest", label: "Vitest", hint: "Fast & modern" },
+            { value: "jest", label: "Jest", hint: "Battle-tested" },
+            { value: "none", label: "None" },
+          ],
+        })
+      ) as "vitest" | "jest" | "none";
 
-        useLinting = handleCancel(
-          await clack.confirm({
-            message: "Initialize ESLint + Prettier?",
-            initialValue: true,
-          })
+      useLinting = handleCancel(
+        await clack.confirm({
+          message: "Initialize ESLint + Prettier?",
+          initialValue: true,
+        })
+      );
+
+      initGit = handleCancel(
+        await clack.confirm({
+          message: "Initialize a new git repository?",
+          initialValue: false,
+        })
+      );
+
+      // Ask about CI/CD setup
+      setupCI = handleCancel(
+        await clack.confirm({
+          message: "Set up GitHub Actions CI? (runs tests on every push/PR)",
+          initialValue: testRunner !== "none",
+        })
+      );
+
+      if (setupCI) {
+        // Show CD information BEFORE asking
+        clack.note(
+          "Automated publishing using GitHub Actions.\n\n" +
+            "Benefits:\n" +
+            "• Automatically publishes to npm when you create a GitHub release\n" +
+            "• Runs tests before publishing\n" +
+            "• No manual npm publish needed\n\n" +
+            "How it works:\n" +
+            "1. Update version: npm version patch/minor/major\n" +
+            "2. Push: git push && git push --tags\n" +
+            "3. Create GitHub release → automatically publishes to npm\n\n" +
+            "Recommended: Skip for beginners (can set up later)\n" +
+            "Requires: NPM_TOKEN secret in GitHub repository",
+          "Automated Publishing (CD)"
         );
 
-        initGit = handleCancel(
+        setupCD = handleCancel(
           await clack.confirm({
-            message: "Initialize a new git repository?",
+            message: "Set up automated publishing to npm? (CD workflow)",
             initialValue: false,
           })
         );
 
-        // Ask about CI/CD setup
-        setupCI = handleCancel(
-          await clack.confirm({
-            message: "Set up GitHub Actions CI? (runs tests on every push/PR)",
-            initialValue: testRunner !== "none",
-          })
-        );
-
-        if (setupCI) {
-          // Show CD information BEFORE asking
+        // Ask about Codecov only if tests are configured
+        if (testRunner !== "none") {
           clack.note(
-            "Automated publishing using GitHub Actions.\n\n" +
+            "Codecov tracks test coverage over time and shows coverage in PRs.\n\n" +
               "Benefits:\n" +
-              "• Automatically publishes to npm when you create a GitHub release\n" +
-              "• Runs tests before publishing\n" +
-              "• No manual npm publish needed\n\n" +
-              "How it works:\n" +
-              "1. Update version: npm version patch/minor/major\n" +
-              "2. Push: git push && git push --tags\n" +
-              "3. Create GitHub release → automatically publishes to npm\n\n" +
-              "Recommended: Skip for beginners (can set up later)\n" +
-              "Requires: NPM_TOKEN secret in GitHub repository",
-            "Automated Publishing (CD)"
+              "• Visualize coverage trends with graphs and badges\n" +
+              "• See coverage changes in pull requests\n" +
+              "• Identify untested code paths\n\n" +
+              "Recommended: Skip for beginners (can be added later)\n" +
+              "Requires: CODECOV_TOKEN secret in GitHub repository",
+            "Test Coverage Tracking"
           );
 
-          setupCD = handleCancel(
+          useCodecov = handleCancel(
             await clack.confirm({
-              message: "Set up automated publishing to npm? (CD workflow)",
-              initialValue: false,
-            })
-          );
-
-          // Ask about Codecov only if tests are configured
-          if (testRunner !== "none") {
-            clack.note(
-              "Codecov tracks test coverage over time and shows coverage in PRs.\n\n" +
-                "Benefits:\n" +
-                "• Visualize coverage trends with graphs and badges\n" +
-                "• See coverage changes in pull requests\n" +
-                "• Identify untested code paths\n\n" +
-                "Recommended: Skip for beginners (can be added later)\n" +
-                "Requires: CODECOV_TOKEN secret in GitHub repository",
-              "Test Coverage Tracking"
-            );
-
-            useCodecov = handleCancel(
-              await clack.confirm({
-                message: "Upload test coverage to Codecov?",
-                initialValue: false,
-              })
-            );
-          } else {
-            useCodecov = false; // No tests, no coverage
-          }
-
-          // Ask about Dependabot (always available if CI is enabled)
-          clack.note(
-            "Dependabot automatically creates PRs to update dependencies.\n\n" +
-              "Benefits:\n" +
-              "• Keep dependencies up-to-date automatically\n" +
-              "• Get security vulnerability alerts and fixes\n" +
-              "• Reduce maintenance burden\n" +
-              "• Configure update frequency (daily/weekly/monthly)\n\n" +
-              "Recommended: Skip for beginners (can add noise with many PRs)\n" +
-              "Note: Free for all GitHub repositories, no secrets needed",
-            "Automated Dependency Updates"
-          );
-
-          useDependabot = handleCancel(
-            await clack.confirm({
-              message: "Set up Dependabot for automated dependency updates?",
+              message: "Upload test coverage to Codecov?",
               initialValue: false,
             })
           );
         } else {
-          setupCD = false;
-          useCodecov = false; // No CI, no Codecov
-          useDependabot = false; // No CI, no Dependabot
+          useCodecov = false; // No tests, no coverage
         }
+
+        // Ask about Dependabot (always available if CI is enabled)
+        clack.note(
+          "Dependabot automatically creates PRs to update dependencies.\n\n" +
+            "Benefits:\n" +
+            "• Keep dependencies up-to-date automatically\n" +
+            "• Get security vulnerability alerts and fixes\n" +
+            "• Reduce maintenance burden\n" +
+            "• Configure update frequency (daily/weekly/monthly)\n\n" +
+            "Recommended: Skip for beginners (can add noise with many PRs)\n" +
+            "Note: Free for all GitHub repositories, no secrets needed",
+          "Automated Dependency Updates"
+        );
+
+        useDependabot = handleCancel(
+          await clack.confirm({
+            message: "Set up Dependabot for automated dependency updates?",
+            initialValue: false,
+          })
+        );
+      } else {
+        setupCD = false;
+        useCodecov = false; // No CI, no Codecov
+        useDependabot = false; // No CI, no Dependabot
       }
 
-      // Step 3: Ask for additional metadata (skip if using defaults)
+      // Step 3: Ask for additional metadata
       let description: string | undefined;
       let author: string | undefined;
       let authorEmail: string | undefined;
       let githubUsername: string | undefined;
       let shouldSaveConfig = false;
 
-      if (!useDefaults) {
-        description =
-          handleCancel(
-            await clack.text({
-              message: "Package description (optional):",
-              placeholder: "A brief description of your package",
-              defaultValue: "",
-            })
-          ) || undefined;
+      description =
+        handleCancel(
+          await clack.text({
+            message: "Package description (optional):",
+            placeholder: "A brief description of your package",
+            defaultValue: "",
+          })
+        ) || undefined;
 
         // Try to load from stored config first
         const storedConfig = readUserConfig();
@@ -547,23 +538,20 @@ program
             }
           }
         }
-      }
 
-      // Step 4: Package manager selection (auto-detect if using defaults)
-      const packageManager = useDefaults
-        ? detectPackageManager()
-        : (handleCancel(
-            await clack.select({
-              message: "Which package manager?",
-              options: [
-                { value: "npm", label: "npm" },
-                { value: "pnpm", label: "pnpm", hint: "Faster, efficient" },
-                { value: "yarn", label: "Yarn" },
-                { value: "bun", label: "Bun", hint: "Fastest" },
-              ],
-              initialValue: detectPackageManager(),
-            })
-          ) as "npm" | "pnpm" | "yarn" | "bun");
+      // Step 4: Package manager selection
+      const packageManager = handleCancel(
+        await clack.select({
+          message: "Which package manager?",
+          options: [
+            { value: "npm", label: "npm" },
+            { value: "pnpm", label: "pnpm", hint: "Faster, efficient" },
+            { value: "yarn", label: "Yarn" },
+            { value: "bun", label: "Bun", hint: "Fastest" },
+          ],
+          initialValue: detectPackageManager(),
+        })
+      ) as "npm" | "pnpm" | "yarn" | "bun";
 
       const config: ProjectConfig = {
         packageName: finalPackageName,
@@ -583,56 +571,49 @@ program
         githubUsername: githubUsername || undefined,
       };
 
-      // Step 5: Show configuration summary (skip final confirmation if using defaults)
-      if (!useDefaults) {
-        clack.note(
-          `Package: ${config.packageName}
+      // Step 5: Show configuration summary
+      clack.note(
+        `Package: ${config.packageName}
 Language: ${config.language === "typescript" ? "TypeScript" : "JavaScript"}
 Module format: ${config.moduleType.toUpperCase()}
 Test runner: ${config.testRunner === "none" ? "None" : config.testRunner}
 Linting: ${config.useLinting ? "Yes (ESLint + Prettier)" : "No"}
 Git: ${config.initGit ? "Yes" : "No"}
 CI/CD: ${
-            config.setupCI
-              ? config.setupCD
-                ? "CI + CD"
-                : "CI only"
-              : "No"
-          }${
-            config.setupCI && config.testRunner !== "none"
-              ? `\nCodecov: ${config.useCodecov ? "Yes" : "No"}`
-              : ""
-          }${
-            config.setupCI
-              ? `\nDependabot: ${config.useDependabot ? "Yes" : "No"}`
-              : ""
-          }
-Package Manager: ${config.packageManager}${
-            config.description ? `\nDescription: ${config.description}` : ""
-          }${config.author ? `\nAuthor: ${config.author}` : ""}${
-            config.authorEmail ? ` <${config.authorEmail}>` : ""
-          }${
-            config.githubUsername ? `\nGitHub: @${config.githubUsername}` : ""
-          }`,
-          "Configuration Summary"
-        );
-
-        const proceed = handleCancel(
-          await clack.confirm({
-            message: "Proceed with this configuration?",
-            initialValue: true,
-          })
-        );
-
-        if (!proceed) {
-          clack.cancel("Operation cancelled");
-          process.exit(0);
+          config.setupCI
+            ? config.setupCD
+              ? "CI + CD"
+              : "CI only"
+            : "No"
+        }${
+          config.setupCI && config.testRunner !== "none"
+            ? `\nCodecov: ${config.useCodecov ? "Yes" : "No"}`
+            : ""
+        }${
+          config.setupCI
+            ? `\nDependabot: ${config.useDependabot ? "Yes" : "No"}`
+            : ""
         }
-      } else {
-        // Show simplified message when using defaults
-        clack.log.info(
-          `Creating ${config.packageName} with recommended defaults (TypeScript + Vitest + Linting)`
-        );
+Package Manager: ${config.packageManager}${
+          config.description ? `\nDescription: ${config.description}` : ""
+        }${config.author ? `\nAuthor: ${config.author}` : ""}${
+          config.authorEmail ? ` <${config.authorEmail}>` : ""
+        }${
+          config.githubUsername ? `\nGitHub: @${config.githubUsername}` : ""
+        }`,
+        "Configuration Summary"
+      );
+
+      const proceed = handleCancel(
+        await clack.confirm({
+          message: "Proceed with this configuration?",
+          initialValue: true,
+        })
+      );
+
+      if (!proceed) {
+        clack.cancel("Operation cancelled");
+        process.exit(0);
       }
 
       // Dry run mode - just show what would be created
@@ -693,17 +674,25 @@ Package Manager: ${config.packageManager}${
 
       // Step 6: Create project
       spinner = clack.spinner();
-      spinner.start("Creating project structure");
+      spinner.start("Fetching latest package versions from npm...");
 
-      await createProject(config, targetDir);
+      const projectWarnings = await createProject(config, targetDir);
 
-      spinner.stop("✓ Project structure created!");
+      spinner.stop("✓ Project created with latest package versions!");
+
+      // Display version warnings if any
+      if (projectWarnings.length > 0) {
+        clack.note(
+          projectWarnings.join('\n\n'),
+          "⚠️  Package Version Warnings"
+        );
+      }
 
       // Step 7: Install dependencies
       let shouldInstall = !skipInstall;
 
-      // Ask user if they want to install dependencies (unless using --yes or --skip-install)
-      if (!skipInstall && !useDefaults) {
+      // Ask user if they want to install dependencies (unless using --skip-install)
+      if (!skipInstall) {
         shouldInstall = handleCancel(
           await clack.confirm({
             message: `Install dependencies now with ${config.packageManager}?`,
@@ -867,7 +856,7 @@ program.parse();
 async function createProject(
   config: ProjectConfig,
   targetDir: string
-): Promise<void> {
+): Promise<string[]> {
   // Create main directory
   await mkdir(targetDir, { recursive: true });
 
@@ -964,10 +953,12 @@ describe('add', () => {
     await writeFile(join(srcDir, testFile), testCode);
   }
 
-  // Generate configuration files
+  // Generate configuration files with dynamic version fetching
+  const { packageJson, warnings, nodeConfig } = await generatePackageJson(config);
+
   await writeFile(
     join(targetDir, "package.json"),
-    JSON.stringify(generatePackageJson(config), null, 2)
+    JSON.stringify(packageJson, null, 2)
   );
 
   await writeFile(join(targetDir, "README.md"), generateReadme(config));
@@ -1062,7 +1053,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '${nodeConfig.latestLTS}.x'
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
 
@@ -1083,7 +1074,7 @@ jobs:
 
     // CI workflow
     if (config.setupCI) {
-      await writeFile(join(workflowDir, "ci.yml"), generateCIWorkflow(config));
+      await writeFile(join(workflowDir, "ci.yml"), generateCIWorkflow(config, nodeConfig));
     }
 
     // Dependabot configuration
@@ -1094,6 +1085,9 @@ jobs:
       );
     }
   }
+
+  // Return warnings from version fetching
+  return warnings;
 }
 
 /**

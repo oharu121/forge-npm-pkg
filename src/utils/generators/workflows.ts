@@ -3,13 +3,14 @@
  */
 
 import type { ProjectConfig } from './types.js';
+import type { NodeVersionConfig } from '../nodeFetcher.js';
 
 /**
  * Generates a CI workflow for GitHub Actions
  * Runs tests, type checking, and linting on push and PR
  */
-export function generateCIWorkflow(config: ProjectConfig): string {
-  const nodeVersions = ['18', '20', '22'];
+export function generateCIWorkflow(config: ProjectConfig, nodeConfig: NodeVersionConfig): string {
+  const nodeVersions = nodeConfig.ciMatrix.map(String);
 
   // Build the steps dynamically based on config
   const steps: string[] = [
@@ -50,10 +51,10 @@ export function generateCIWorkflow(config: ProjectConfig): string {
         run: npm run build`);
 
   // Add coverage upload only if Codecov is enabled and tests are configured
-  // Only upload for Node 20 to avoid duplicate uploads
+  // Only upload for latest LTS to avoid duplicate uploads
   if (config.testRunner !== 'none' && config.useCodecov) {
     steps.push(`      - name: Upload coverage to Codecov
-        if: matrix.node-version == '20'
+        if: matrix.node-version == '${nodeConfig.latestLTS}'
         uses: codecov/codecov-action@v4
         continue-on-error: true
         with:

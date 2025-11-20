@@ -27,7 +27,7 @@ export function readUserConfig(): UserConfig | null {
     }
     const data = readFileSync(CONFIG_PATH, "utf-8");
     return JSON.parse(data);
-  } catch (error) {
+  } catch {
     // If config is corrupted, return null
     return null;
   }

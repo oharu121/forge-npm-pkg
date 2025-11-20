@@ -14,6 +14,8 @@ A powerful CLI tool to scaffold production-ready npm packages with modern best p
 ## Features
 
 - Interactive CLI with beautiful prompts
+- **Always-latest package versions** - Dynamically fetches current versions from npm registry
+- **Automatic Node.js LTS detection** - Uses current LTS versions for CI and engines
 - TypeScript or JavaScript support
 - Multiple module formats: ESM, CommonJS, or Dual (both)
 - Built-in testing with Vitest or Jest
@@ -26,6 +28,7 @@ A powerful CLI tool to scaffold production-ready npm packages with modern best p
 - Package export validation with `@arethetypeswrong/cli`
 - Proper `package.json` exports configuration
 - Git repository initialization
+- **Smart version warnings** - Alerts about brand new packages that might be unstable
 
 ## Usage
 
@@ -498,10 +501,83 @@ npx forge-npm-pkg my-package --no-save
 - Windows: `C:\Users\{user}\AppData\Roaming\forge-npm-pkg\config.json`
 - Mac/Linux: `~/.config/forge-npm-pkg/config.json`
 
+## Dynamic Version Management
+
+### Always Latest, Zero Maintenance
+
+This tool uses **dynamic version fetching** to ensure your projects always start with the latest stable package versions.
+
+#### How It Works
+
+When you run `forge-npm-pkg`, it:
+1. **Fetches latest versions** from npm registry in real-time
+2. **Detects Node.js LTS versions** from nodejs.org
+3. **Warns about risky versions** (new major releases within 30 days)
+4. **Falls back gracefully** if network issues occur
+
+#### What You Get
+
+**Latest Package Versions:**
+```json
+{
+  "devDependencies": {
+    "typescript": "^5.7.2",    // ✓ Latest fetched today
+    "vitest": "^2.1.5",        // ✓ Latest fetched today
+    "eslint": "^9.15.0"        // ✓ Latest fetched today
+  }
+}
+```
+
+**Current Node.js LTS:**
+```json
+{
+  "engines": {
+    "node": ">=20.0.0"         // ✓ Current LTS requirement
+  }
+}
+```
+
+**Dynamic CI Matrix:**
+```yaml
+strategy:
+  matrix:
+    node-version: [20, 22]     # ✓ Active LTS versions
+```
+
+#### Smart Warnings
+
+If a package was just released, you'll see:
+
+```
+⚠️  Package Version Warnings
+
+⚠️  typescript@6.0.0 (3 days old)
+   New major version - may contain breaking changes.
+   If issues occur, downgrade: npm install typescript@5
+```
+
+#### Benefits
+
+- ✅ **No maintenance** - Never update hardcoded versions again
+- ✅ **Always current** - Get latest features and security fixes
+- ✅ **Future-proof** - Automatically adopts new Node LTS versions
+- ✅ **Safe defaults** - Warnings for potentially unstable versions
+- ✅ **Graceful fallback** - Works even with network issues
+
+#### When Versions Update
+
+**You run the tool today (January 2025):**
+- Generates project with TypeScript 5.7, Vitest 2.1, Node 20 & 22
+
+**You run the tool in October 2025:**
+- Generates project with TypeScript 6.x, Vitest 3.x, Node 22 & 24
+- **No code changes needed** - automatic!
+
 ## Requirements
 
-- Node.js >= 18.0.0
+- Node.js >= 20.0.0 (current LTS minimum)
 - npm, pnpm, yarn, or bun
+- Internet connection (for fetching latest versions)
 
 ## Development
 
@@ -559,7 +635,7 @@ These generate projects in `.dev-test/` which is auto-cleaned and gitignored.
 
 Automated testing on every push:
 
-- Runs on Node 18 & 20
+- Runs on current Node.js LTS versions (dynamically determined)
 - Type checking
 - Unit tests
 - E2E tests

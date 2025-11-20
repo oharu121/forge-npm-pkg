@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0]
+
+### Added
+
+- **Dynamic npm package version fetching** - Tool now fetches the latest versions of all packages from npm registry at scaffold time
+- **Dynamic Node.js LTS version fetching** - Automatically detects and uses current LTS Node.js versions
+- **`engines` field in generated package.json** - Specifies minimum Node.js version requirement based on current LTS
+- **Smart version warnings** - Warns users when fetched packages are brand new and potentially unstable:
+  - New major versions (x.0.x) released within 30 days
+  - Early minor versions (x.1.x) released within 14 days
+- **Automatic fallback system** for version fetching:
+  - Primary: Fetch latest from npm registry
+  - Fallback 1: Find stable version (30+ days old)
+  - Fallback 2: Use "latest" string (resolved by npm during install)
+
+### Changed
+
+- **BREAKING**: Removed hardcoded package versions - all versions now fetched dynamically
+- CI workflow matrix now uses dynamic Node.js LTS versions (currently [20, 22])
+- Publish workflow now uses latest Node.js LTS version (currently 22.x)
+- Codecov upload in CI now targets latest LTS instead of hardcoded Node 20
+- Generated projects now include `engines` field requiring current LTS Node version
+- Spinner message during project creation now indicates "Fetching latest package versions from npm..."
+
+### Improved
+
+- **Zero-maintenance version management** - No more manual updates needed when new package versions release
+- **Future-proof Node.js versioning** - Automatically adopts new LTS versions (Node 24 in October 2025, etc.)
+- **Better user education** - Clear warnings about potentially risky new versions
+- **Graceful degradation** - Multiple fallback levels ensure tool never completely fails
+
+### Technical
+
+- Added `src/utils/versionFetcher.ts` - npm package version fetcher with smart fallbacks
+- Added `src/utils/nodeFetcher.ts` - Node.js LTS version fetcher with EOL checking
+- Made `generatePackageJson()` async to support dynamic fetching
+- Made `generateDevDependencies()` async to fetch package versions in parallel
+- Updated `generateCIWorkflow()` to accept Node version configuration
+- All version fetching operations execute in parallel for performance
+
 ## [1.6.0]
 
 ### Changed

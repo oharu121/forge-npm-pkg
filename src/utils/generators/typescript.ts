@@ -8,7 +8,7 @@ import type { ProjectConfig } from './types.js';
 /**
  * Generates tsconfig.json for TypeScript projects
  */
-export function generateTsConfig(config: ProjectConfig): Record<string, any> {
+export function generateTsConfig(config: ProjectConfig): Record<string, unknown> {
   const moduleResolution = config.moduleType === 'commonjs' ? 'node' : 'bundler';
   const module = config.moduleType === 'commonjs' ? 'CommonJS' : 'ESNext';
 

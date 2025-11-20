@@ -4,13 +4,19 @@
  */
 
 import type { ProjectConfig } from './types.js';
+import { fetchLatestVersions } from '../versionFetcher.js';
+import { getNodeLTSVersions } from '../nodeFetcher.js';
 
 /**
  * Generates a complete package.json based on the project configuration.
  * This is the most critical function as it handles the complex exports mapping
  * for different module types (ESM, CommonJS, Dual).
  */
-export function generatePackageJson(config: ProjectConfig): Record<string, any> {
+export async function generatePackageJson(config: ProjectConfig): Promise<{
+  packageJson: Record<string, unknown>;
+  warnings: string[];
+  nodeConfig: import('../nodeFetcher.js').NodeVersionConfig;
+}> {
   // Format author field according to npm standards
   let authorField = '';
   if (config.author) {
@@ -23,7 +29,13 @@ export function generatePackageJson(config: ProjectConfig): Record<string, any> 
     }
   }
 
-  const pkg: Record<string, any> = {
+  // Generate dev dependencies with dynamic version fetching
+  const { devDependencies, warnings } = await generateDevDependencies(config);
+
+  // Fetch Node.js LTS versions
+  const nodeConfig = await getNodeLTSVersions();
+
+  const pkg: Record<string, unknown> = {
     name: config.packageName,
     version: '0.1.0',
     description: config.description || 'A new npm package',
@@ -36,7 +48,10 @@ export function generatePackageJson(config: ProjectConfig): Record<string, any> 
     keywords: [],
     author: authorField,
     license: 'MIT',
-    devDependencies: generateDevDependencies(config),
+    engines: {
+      node: nodeConfig.engines
+    },
+    devDependencies,
   };
 
   // Add repository field if GitHub username is provided
@@ -51,7 +66,7 @@ export function generatePackageJson(config: ProjectConfig): Record<string, any> 
     pkg.homepage = `https://github.com/${config.githubUsername}/${config.packageName}#readme`;
   }
 
-  return pkg;
+  return { packageJson: pkg, warnings, nodeConfig };
 }
 
 /**
@@ -86,10 +101,10 @@ function generateFilesList(config: ProjectConfig): string[] {
  * - These re-export from the compiled dist/ folder
  * - This ensures clean IDE autocomplete (shows package name, not package/dist)
  */
-function generateEntryPoints(config: ProjectConfig): Record<string, any> {
+function generateEntryPoints(config: ProjectConfig): Record<string, unknown> {
   const isTypeScript = config.language === 'typescript';
 
-  const entryPoints: Record<string, any> = {};
+  const entryPoints: Record<string, unknown> = {};
 
   // For JavaScript projects without build step
   if (!isTypeScript) {
@@ -202,44 +217,57 @@ function generateScripts(config: ProjectConfig): Record<string, string> {
 
 /**
  * Generates the devDependencies object based on project configuration
+ * Fetches latest versions dynamically from npm registry
  */
-function generateDevDependencies(config: ProjectConfig): Record<string, string> {
-  const deps: Record<string, string> = {};
+async function generateDevDependencies(config: ProjectConfig): Promise<{
+  devDependencies: Record<string, string>;
+  warnings: string[];
+}> {
+  const packagesToFetch: string[] = [];
 
   // TypeScript and build tools
   if (config.language === 'typescript') {
-    deps.typescript = '^5.3.3';
-    deps.tsup = '^8.0.1';
-    deps['@types/node'] = '^20.11.0';
-    // Package validation tool
-    deps['@arethetypeswrong/cli'] = '^0.15.0';
+    packagesToFetch.push('typescript', 'tsup', '@types/node', '@arethetypeswrong/cli');
   }
 
   // Test runners
   if (config.testRunner === 'vitest') {
-    deps.vitest = '^1.2.0';
+    packagesToFetch.push('vitest');
     // Add coverage provider when CI is enabled
     if (config.setupCI) {
-      deps['@vitest/coverage-v8'] = '^1.2.0';
+      packagesToFetch.push('@vitest/coverage-v8');
     }
   } else if (config.testRunner === 'jest') {
-    deps.jest = '^29.7.0';
+    packagesToFetch.push('jest');
     if (config.language === 'typescript') {
-      deps['ts-jest'] = '^29.1.1';
-      deps['@types/jest'] = '^29.5.11';
+      packagesToFetch.push('ts-jest', '@types/jest');
     }
   }
 
   // Linting tools
   if (config.useLinting) {
     if (config.language === 'typescript') {
-      deps['@typescript-eslint/eslint-plugin'] = '^6.19.0';
-      deps['@typescript-eslint/parser'] = '^6.19.0';
+      packagesToFetch.push('@typescript-eslint/eslint-plugin', '@typescript-eslint/parser');
     }
-    deps.eslint = '^8.56.0';
-    deps.prettier = '^3.2.4';
-    deps['eslint-config-prettier'] = '^9.1.0';
+    packagesToFetch.push('eslint', 'prettier', 'eslint-config-prettier');
   }
 
-  return deps;
+  // Fetch all versions in parallel
+  const versionMap = await fetchLatestVersions(packagesToFetch);
+
+  // Build dependencies object
+  const deps: Record<string, string> = {};
+  const warnings: string[] = [];
+
+  for (const pkg of packagesToFetch) {
+    const result = versionMap.get(pkg);
+    if (result) {
+      deps[pkg] = result.version;
+      if (result.warning) {
+        warnings.push(result.warning);
+      }
+    }
+  }
+
+  return { devDependencies: deps, warnings };
 }
