@@ -5,12 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0]
+
+### Added
+
+- **Interactive release automation script** (`scripts/release.mjs`) - Beautiful UX for the complete release workflow:
+  - Branch validation check (warns if not on main/master)
+  - Smart remote detection (catches Dependabot commits before release)
+  - Automated pull with conflict detection
+  - Full test suite execution
+  - Interactive commit message prompt
+  - Version bump selection (patch/minor/major)
+  - Automated push to remote with CD trigger
+  - Comprehensive error handling with recovery steps
+  - Abort support at any step (ESC key)
+
+### Technical
+
+- Added `scripts/release.mjs` - Interactive release automation tool with comprehensive error handling
+- Added `scripts/README.md` - Complete documentation for the release script including example scenarios
+- Updated `package.json` scripts:
+  - Changed `prerelease` → `preversion` (npm hook that runs before version bump)
+  - Changed `release` → `node scripts/release.mjs` (interactive release tool)
+
 ## [2.0.0]
 
 ### Added
 
 - **Dynamic npm package version fetching** - Tool now fetches the latest versions of all packages from npm registry at scaffold time
 - **Dynamic Node.js LTS version fetching** - Automatically detects and uses current LTS Node.js versions
+- **Dynamic GitHub Actions version fetching** - Automatically fetches latest major version tags for GitHub Actions:
+  - `actions/checkout` - Uses latest major version (currently v5)
+  - `actions/setup-node` - Uses latest major version (currently v6)
+  - `codecov/codecov-action` - Uses latest major version (currently v5)
+  - Fetched in parallel with npm packages for performance
+  - Conservative fallbacks if GitHub API is unavailable
 - **`engines` field in generated package.json** - Specifies minimum Node.js version requirement based on current LTS
 - **Smart version warnings** - Warns users when fetched packages are brand new and potentially unstable:
   - New major versions (x.0.x) released within 30 days
@@ -23,27 +52,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **BREAKING**: Removed hardcoded package versions - all versions now fetched dynamically
+- **BREAKING**: Removed hardcoded GitHub Actions versions - all action versions now fetched dynamically
 - CI workflow matrix now uses dynamic Node.js LTS versions (currently [20, 22])
-- Publish workflow now uses latest Node.js LTS version (currently 22.x)
+- CI workflow now uses dynamically fetched GitHub Actions versions
+- Publish workflow now uses latest Node.js LTS version (currently 22.x) and dynamic action versions
 - Codecov upload in CI now targets latest LTS instead of hardcoded Node 20
 - Generated projects now include `engines` field requiring current LTS Node version
 - Spinner message during project creation now indicates "Fetching latest package versions from npm..."
 
 ### Improved
 
-- **Zero-maintenance version management** - No more manual updates needed when new package versions release
+- **Zero-maintenance version management** - No more manual updates needed when new package or action versions release
 - **Future-proof Node.js versioning** - Automatically adopts new LTS versions (Node 24 in October 2025, etc.)
+- **Future-proof GitHub Actions** - New projects automatically use latest action versions without tool updates
 - **Better user education** - Clear warnings about potentially risky new versions
 - **Graceful degradation** - Multiple fallback levels ensure tool never completely fails
+- **Security best practices** - Generated workflows automatically benefit from latest action security patches
 
 ### Technical
 
 - Added `src/utils/versionFetcher.ts` - npm package version fetcher with smart fallbacks
 - Added `src/utils/nodeFetcher.ts` - Node.js LTS version fetcher with EOL checking
+- Added `src/utils/actionsFetcher.ts` - GitHub Actions version fetcher with fallback support
+- Added `tests/actionsFetcher.test.ts` - Comprehensive test suite for actions version fetching
 - Made `generatePackageJson()` async to support dynamic fetching
 - Made `generateDevDependencies()` async to fetch package versions in parallel
-- Updated `generateCIWorkflow()` to accept Node version configuration
-- All version fetching operations execute in parallel for performance
+- Updated `generateCIWorkflow()` to accept Node version configuration and GitHub Actions versions
+- Updated `src/index.ts` to fetch and apply dynamic action versions to both CI and publish workflows
+- Updated `src/utils/generators/workflows.test.ts` to test dynamic action version usage
+- All version fetching operations (npm, Node.js, GitHub Actions) execute in parallel for performance
 
 ## [1.6.0]
 

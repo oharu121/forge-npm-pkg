@@ -4,21 +4,31 @@
 
 import type { ProjectConfig } from './types.js';
 import type { NodeVersionConfig } from '../nodeFetcher.js';
+import type { ActionVersionResult } from '../actionsFetcher.js';
 
 /**
  * Generates a CI workflow for GitHub Actions
  * Runs tests, type checking, and linting on push and PR
  */
-export function generateCIWorkflow(config: ProjectConfig, nodeConfig: NodeVersionConfig): string {
+export function generateCIWorkflow(
+  config: ProjectConfig,
+  nodeConfig: NodeVersionConfig,
+  actionVersions: Map<string, ActionVersionResult>
+): string {
   const nodeVersions = nodeConfig.ciMatrix.map(String);
+
+  // Get action versions with fallbacks
+  const checkoutVersion = actionVersions.get('actions/checkout')?.version || 'v4';
+  const setupNodeVersion = actionVersions.get('actions/setup-node')?.version || 'v4';
+  const codecovVersion = actionVersions.get('codecov/codecov-action')?.version || 'v4';
 
   // Build the steps dynamically based on config
   const steps: string[] = [
     `      - name: Checkout code
-        uses: actions/checkout@v4`,
+        uses: actions/checkout@${checkoutVersion}`,
 
     `      - name: Setup Node.js \${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@${setupNodeVersion}
         with:
           node-version: \${{ matrix.node-version }}`,
 
@@ -55,7 +65,7 @@ export function generateCIWorkflow(config: ProjectConfig, nodeConfig: NodeVersio
   if (config.testRunner !== 'none' && config.useCodecov) {
     steps.push(`      - name: Upload coverage to Codecov
         if: matrix.node-version == '${nodeConfig.latestLTS}'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@${codecovVersion}
         continue-on-error: true
         with:
           token: \${{ secrets.CODECOV_TOKEN }}

@@ -33,6 +33,7 @@ import {
   getConfigPath,
 } from "./utils/userConfig.js";
 import { readGitConfig, formatGitConfig } from "./utils/gitConfig.js";
+import { fetchLatestActionVersions } from "./utils/actionsFetcher.js";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
@@ -956,6 +957,16 @@ describe('add', () => {
   // Generate configuration files with dynamic version fetching
   const { packageJson, warnings, nodeConfig } = await generatePackageJson(config);
 
+  // Fetch GitHub Actions versions in parallel with package.json generation
+  const actionVersions = await fetchLatestActionVersions();
+
+  // Collect warnings from action version fetching
+  for (const [, result] of actionVersions) {
+    if (result.warning) {
+      warnings.push(result.warning);
+    }
+  }
+
   await writeFile(
     join(targetDir, "package.json"),
     JSON.stringify(packageJson, null, 2)
@@ -1030,6 +1041,10 @@ describe('add', () => {
     const workflowDir = join(githubDir, "workflows");
     await mkdir(workflowDir, { recursive: true });
 
+    // Get action versions with fallbacks
+    const checkoutVersion = actionVersions.get('actions/checkout')?.version || 'v4';
+    const setupNodeVersion = actionVersions.get('actions/setup-node')?.version || 'v4';
+
     // CD publish workflow
     if (config.setupCD) {
       const publishWorkflow = `name: Publish to npm
@@ -1048,10 +1063,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@${checkoutVersion}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@${setupNodeVersion}
         with:
           node-version: '${nodeConfig.latestLTS}.x'
           registry-url: 'https://registry.npmjs.org'
@@ -1074,7 +1089,7 @@ jobs:
 
     // CI workflow
     if (config.setupCI) {
-      await writeFile(join(workflowDir, "ci.yml"), generateCIWorkflow(config, nodeConfig));
+      await writeFile(join(workflowDir, "ci.yml"), generateCIWorkflow(config, nodeConfig, actionVersions));
     }
 
     // Dependabot configuration

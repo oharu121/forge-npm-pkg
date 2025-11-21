@@ -512,8 +512,9 @@ This tool uses **dynamic version fetching** to ensure your projects always start
 When you run `forge-npm-pkg`, it:
 1. **Fetches latest versions** from npm registry in real-time
 2. **Detects Node.js LTS versions** from nodejs.org
-3. **Warns about risky versions** (new major releases within 30 days)
-4. **Falls back gracefully** if network issues occur
+3. **Fetches GitHub Actions versions** - Latest major version tags (v5, v6)
+4. **Warns about risky versions** (new major releases within 30 days)
+5. **Falls back gracefully** if network issues occur
 
 #### What You Get
 
@@ -544,6 +545,14 @@ strategy:
     node-version: [20, 22]     # ✓ Active LTS versions
 ```
 
+**Latest GitHub Actions:**
+```yaml
+steps:
+  - uses: actions/checkout@v5        # ✓ Latest major version
+  - uses: actions/setup-node@v6      # ✓ Latest major version
+  - uses: codecov/codecov-action@v5  # ✓ Latest major version
+```
+
 #### Smart Warnings
 
 If a package was just released, you'll see:
@@ -560,7 +569,8 @@ If a package was just released, you'll see:
 
 - ✅ **No maintenance** - Never update hardcoded versions again
 - ✅ **Always current** - Get latest features and security fixes
-- ✅ **Future-proof** - Automatically adopts new Node LTS versions
+- ✅ **Future-proof** - Automatically adopts new Node LTS and GitHub Actions versions
+- ✅ **Security best practices** - Workflows automatically get latest action security patches
 - ✅ **Safe defaults** - Warnings for potentially unstable versions
 - ✅ **Graceful fallback** - Works even with network issues
 
@@ -568,9 +578,11 @@ If a package was just released, you'll see:
 
 **You run the tool today (January 2025):**
 - Generates project with TypeScript 5.7, Vitest 2.1, Node 20 & 22
+- GitHub workflows use actions/checkout@v5, actions/setup-node@v6
 
 **You run the tool in October 2025:**
 - Generates project with TypeScript 6.x, Vitest 3.x, Node 22 & 24
+- GitHub workflows use whatever versions are latest at that time
 - **No code changes needed** - automatic!
 
 ## Requirements
@@ -652,6 +664,45 @@ npm run test:all            # Typecheck + Unit + E2E
 ```bash
 npm link
 forge-npm-pkg test-package
+```
+
+### Release Process
+
+This project includes an interactive release automation tool:
+
+```bash
+npm run release
+```
+
+The script provides a beautiful interactive experience with `@clack/prompts`:
+
+1. **Check branch** - Warns if not on main/master branch
+2. **Check remote** - Detects if remote has new commits (e.g., Dependabot)
+3. **Pull if needed** - Offers to pull latest changes automatically
+4. **Test** - Runs full test suite (typecheck + lint + tests)
+5. **Review** - Shows what will be committed
+6. **Commit** - Prompts for commit message
+7. **Version** - Interactive bump selection (patch/minor/major)
+8. **Push** - Pushes commits and tags (triggers CD workflow)
+
+**Features:**
+- ✅ Branch validation - Warns if not on main/master branch
+- ✅ Smart remote detection - Catches Dependabot commits before you release
+- ✅ Abort anytime with ESC key
+- ✅ Comprehensive error handling
+- ✅ Helpful error messages with recovery instructions
+- ✅ Safe - never leaves repo in broken state
+
+See [scripts/README.md](scripts/README.md) for detailed documentation.
+
+**Manual alternative:**
+```bash
+npm run sync              # Pull latest + install + test
+npm run test:all          # Verify everything passes
+git add .
+git commit -m "feat: your message"
+npm version patch         # or minor, or major
+git push && git push --tags
 ```
 
 ## Why This Tool?
