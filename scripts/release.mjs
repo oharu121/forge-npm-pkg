@@ -35,6 +35,8 @@ async function release() {
 
   clack.intro('🚀 Release Tool');
 
+  clack.note('Press ESC at any time to cancel', 'Tip');
+
   // Step 1: Check current branch
   let currentBranch;
   try {

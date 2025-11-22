@@ -28,8 +28,8 @@
     "prepublishOnly": "npm run build && npm run test:all",
     "sync": "git pull --rebase && npm install && npm test",
     "sync:quick": "git pull --rebase && npm install",
-    "preversion": "npm run test:all",
-    "release": "node scripts/release.mjs"
+    "release": "node scripts/release.mjs",
+    "token": "node scripts/get-token.mjs"
   },
   "keywords": [
     "cli",

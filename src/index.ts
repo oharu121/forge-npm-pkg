@@ -25,6 +25,7 @@ import {
   generateRootIndexDts,
   generateCIWorkflow,
   generateDependabotConfig,
+  generateGetTokenScript,
   generateReleaseScript,
 } from "./utils/generators/index.js";
 import {
@@ -1107,11 +1108,13 @@ jobs:
     const scriptsDir = join(targetDir, "scripts");
     await mkdir(scriptsDir, { recursive: true });
     await writeFile(join(scriptsDir, "release.mjs"), generateReleaseScript(config));
+    await writeFile(join(scriptsDir, "get-token.mjs"), generateGetTokenScript());
 
-    // Make the script executable on Unix systems
+    // Make the scripts executable on Unix systems
     try {
       const { chmodSync } = await import('fs');
       chmodSync(join(scriptsDir, "release.mjs"), 0o755);
+      chmodSync(join(scriptsDir, "get-token.mjs"), 0o755);
     } catch {
       // Ignore chmod errors on Windows
     }

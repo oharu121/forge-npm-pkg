@@ -181,6 +181,33 @@ export { default } from '${typeReference}';
 }
 
 /**
+ * Generates scripts/get-token.mjs - Helper script to display npm token
+ * Useful for debugging or setting up CI/CD secrets
+ */
+export function generateGetTokenScript(): string {
+  return `#!/usr/bin/env node
+
+/**
+ * Displays the npm authentication token from ~/.npmrc
+ * Useful for debugging or setting up CI/CD secrets
+ */
+
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { homedir } from 'os';
+
+try {
+  const npmrcPath = join(homedir(), '.npmrc');
+  const content = readFileSync(npmrcPath, 'utf8');
+  console.log(content);
+} catch (error) {
+  console.error('Error reading .npmrc:', error.message);
+  process.exit(1);
+}
+`;
+}
+
+/**
  * Generates scripts/release.mjs - Interactive release automation script
  * This script provides a beautiful UX for the complete release workflow
  */
@@ -223,6 +250,8 @@ async function release() {
   console.clear();
 
   clack.intro('🚀 Release Tool');
+
+  clack.note('Press ESC at any time to cancel', 'Tip');
 
   // Step 1: Check current branch
   let currentBranch;

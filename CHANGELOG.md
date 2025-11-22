@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0]
+
+### Added
+
+- **npm token helper script** (`scripts/get-token.mjs`) - Cross-platform utility to display npm authentication token from `.npmrc`
+  - Useful for debugging and setting up CI/CD secrets
+  - Works consistently on Windows, macOS, and Linux
+  - Accessible via `npm run token` script
+
+### Changed
+
+- **Improved release workflow UX** - Removed redundant test execution during version bump
+  - Removed `preversion` script that caused duplicate test runs
+  - Tests now run once with clear spinner feedback instead of twice (once explicit, once during `npm version`)
+  - Eliminates confusing pause during version selection in release workflow
+
+### Technical
+
+- Added `scripts/get-token.mjs` - Cross-platform npm token reader
+- Added `generateGetTokenScript()` function in `src/utils/generators/files.ts`
+- Updated `package.json` scripts:
+  - Added `token` script: `node scripts/get-token.mjs`
+  - Removed `preversion` script (redundant with release script's explicit test run)
+- Generated packages now include `token` script when CD is enabled
+- Generated packages no longer include redundant `preversion` hook
+
 ## [2.2.0]
 
 ### Added

@@ -242,8 +242,8 @@ function generateScripts(config: ProjectConfig): Record<string, string> {
 
   // Release automation scripts (only for projects with CI/CD setup)
   if (config.setupCD) {
-    scripts.preversion = 'npm run build && npm test';
     scripts.release = 'node scripts/release.mjs';
+    scripts.token = 'node scripts/get-token.mjs';
   }
 
   return scripts;

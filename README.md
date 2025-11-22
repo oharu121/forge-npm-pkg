@@ -228,6 +228,12 @@ gh secret set NPM_TOKEN
 # 5. Click "Add secret"
 ```
 
+**💡 Tip:** If you need to view your npm token locally, use:
+```bash
+npm run token
+```
+This displays your `.npmrc` file contents, making it easy to copy the token for CI/CD setup.
+
 ### 4. Develop Your Package
 
 **Write your code:**

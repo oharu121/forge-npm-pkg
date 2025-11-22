@@ -36,6 +36,7 @@ export {
   generateRootIndexJs,
   generateRootIndexMjs,
   generateRootIndexDts,
+  generateGetTokenScript,
   generateReleaseScript,
 } from './files.js';
 
