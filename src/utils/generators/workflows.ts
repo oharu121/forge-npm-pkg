@@ -92,6 +92,55 @@ ${steps.join('\n\n')}
 }
 
 /**
+ * Generates a CD (Continuous Deployment) workflow for GitHub Actions
+ * Publishes package to npm when a release is created
+ */
+export function generateCDWorkflow(
+  nodeConfig: NodeVersionConfig,
+  actionVersions: Map<string, ActionVersionResult>
+): string {
+  // Get action versions with fallbacks
+  const checkoutVersion = actionVersions.get('actions/checkout')?.version || 'v4';
+  const setupNodeVersion = actionVersions.get('actions/setup-node')?.version || 'v4';
+
+  return `name: Publish to npm
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@${checkoutVersion}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@${setupNodeVersion}
+        with:
+          node-version: '${nodeConfig.latestLTS}.x'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests
+        run: npm run test:all
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: \${{ secrets.NPM_TOKEN }}
+`;
+}
+
+/**
  * Generates Dependabot configuration for automated dependency updates
  * Creates a .github/dependabot.yml file that checks npm dependencies weekly
  * Groups dev dependencies together to reduce PR noise

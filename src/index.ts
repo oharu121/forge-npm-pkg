@@ -24,6 +24,7 @@ import {
   generateRootIndexMjs,
   generateRootIndexDts,
   generateCIWorkflow,
+  generateCDWorkflow,
   generateDependabotConfig,
   generateGetTokenScript,
   generateReleaseScript,
@@ -1013,8 +1014,8 @@ describe('add', () => {
   // Linting files
   if (config.useLinting) {
     await writeFile(
-      join(targetDir, ".eslintrc.json"),
-      JSON.stringify(generateEslintConfig(config), null, 2)
+      join(targetDir, "eslint.config.js"),
+      generateEslintConfig(config)
     );
     await writeFile(
       join(targetDir, ".prettierrc"),
@@ -1043,50 +1044,9 @@ describe('add', () => {
     const workflowDir = join(githubDir, "workflows");
     await mkdir(workflowDir, { recursive: true });
 
-    // Get action versions with fallbacks
-    const checkoutVersion = actionVersions.get('actions/checkout')?.version || 'v4';
-    const setupNodeVersion = actionVersions.get('actions/setup-node')?.version || 'v4';
-
     // CD publish workflow
     if (config.setupCD) {
-      const publishWorkflow = `name: Publish to npm
-
-on:
-  push:
-    tags:
-      - 'v*'
-
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@${checkoutVersion}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@${setupNodeVersion}
-        with:
-          node-version: '${nodeConfig.latestLTS}.x'
-          registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Run Tests
-        run: npm run test:all
-
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: \${{ secrets.NPM_TOKEN }}
-`;
-
-      await writeFile(join(workflowDir, "publish.yml"), publishWorkflow);
+      await writeFile(join(workflowDir, "publish.yml"), generateCDWorkflow(nodeConfig, actionVersions));
     }
 
     // CI workflow

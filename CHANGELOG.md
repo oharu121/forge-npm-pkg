@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1]
+
+### Added
+
+- **ESLint flat config support** - Generates modern `eslint.config.js` instead of deprecated `.eslintrc.json`
+  - Uses ESLint v9 flat config format (array-based configuration)
+  - Future-proof for ESLint v10+ which will remove old config support
+  - Includes `@eslint/js` for official recommended configs
+  - Separate implementations for TypeScript and JavaScript projects
+- **Release script UX improvements**:
+  - Added "Press ESC at any time to cancel" hint at the start
+  - Better user guidance throughout the interactive workflow
+
+### Changed
+
+- **BREAKING**: Generated projects now use `eslint.config.js` (flat config) instead of `.eslintrc.json`
+  - Existing projects are unaffected (this only applies to newly generated projects)
+  - Lint scripts simplified: `eslint .` (no more `--ext` flag needed)
+  - File patterns defined in config instead of command-line flags
+
+- **Workflow generation refactored** - Extracted CD workflow to dedicated generator function
+  - `generateCDWorkflow()` now matches pattern of `generateCIWorkflow()`
+  - Better code organization and maintainability
+
+### Technical
+
+- Added `generateCDWorkflow()` function in `src/utils/generators/workflows.ts`
+- Updated `generateEslintConfig()` in `src/utils/generators/linting.ts`:
+  - Changed return type from object to string (generates JavaScript code)
+  - Outputs modern flat config format
+  - Separate implementations for TypeScript and JavaScript
+- Generated packages now include:
+  - `token` script when CD is enabled
+  - `eslint.config.js` with flat config format
+  - Simplified lint scripts without `--ext` flag
+  - `@eslint/js` in devDependencies
+- Generated packages no longer include:
+  - Redundant `preversion` hook
+  - Deprecated `.eslintrc.json` file
+- Updated tests to validate new flat config format
+
 ## [2.3.0]
 
 ### Added
@@ -28,8 +69,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `package.json` scripts:
   - Added `token` script: `node scripts/get-token.mjs`
   - Removed `preversion` script (redundant with release script's explicit test run)
-- Generated packages now include `token` script when CD is enabled
-- Generated packages no longer include redundant `preversion` hook
 
 ## [2.2.0]
 

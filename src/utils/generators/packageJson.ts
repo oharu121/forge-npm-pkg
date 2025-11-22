@@ -77,7 +77,7 @@ export async function generatePackageJson(config: ProjectConfig): Promise<{
     author: authorField,
     license: 'MIT',
     engines: {
-      node: nodeConfig.engines
+      node: nodeConfig.engines,
     },
     devDependencies,
   };
@@ -129,7 +129,9 @@ function generateFilesList(config: ProjectConfig): string[] {
  * - These re-export from the compiled dist/ folder
  * - This ensures clean IDE autocomplete (shows package name, not package/dist)
  */
-function generateEntryPoints(config: ProjectConfig): Partial<Pick<PackageJson, 'main' | 'module' | 'types' | 'exports'>> {
+function generateEntryPoints(
+  config: ProjectConfig
+): Partial<Pick<PackageJson, 'main' | 'module' | 'types' | 'exports'>> {
   const isTypeScript = config.language === 'typescript';
 
   const entryPoints: Partial<Pick<PackageJson, 'main' | 'module' | 'types' | 'exports'>> = {};
@@ -217,11 +219,15 @@ function generateScripts(config: ProjectConfig): Record<string, string> {
 
   // Linting scripts
   if (config.useLinting) {
-    const ext = config.language === 'typescript' ? 'ts' : 'js';
-    scripts.lint = `eslint . --ext .${ext}`;
-    scripts['lint:fix'] = `eslint . --ext .${ext} --fix`;
+    // Flat config doesn't need --ext flag; file patterns are in eslint.config.js
+    scripts.lint = 'eslint .';
+    scripts['lint:fix'] = 'eslint . --fix';
     scripts.format = 'prettier --write "src/**/*.{ts,js,json,md}"';
     scripts['format:check'] = 'prettier --check "src/**/*.{ts,js,json,md}"';
+  }
+
+  if (config.testRunner && config.useLinting) {
+    scripts['test:all'] = 'npm run typecheck && npm run lint && npm run test';
   }
 
   // Package validation (only for TypeScript as it checks types)
@@ -280,10 +286,10 @@ async function generateDevDependencies(config: ProjectConfig): Promise<{
 
   // Linting tools
   if (config.useLinting) {
+    packagesToFetch.push('@eslint/js', 'eslint', 'prettier', 'eslint-config-prettier');
     if (config.language === 'typescript') {
       packagesToFetch.push('@typescript-eslint/eslint-plugin', '@typescript-eslint/parser');
     }
-    packagesToFetch.push('eslint', 'prettier', 'eslint-config-prettier');
   }
 
   // Release automation tools (only for projects with CI/CD setup)

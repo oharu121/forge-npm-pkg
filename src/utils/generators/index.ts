@@ -41,4 +41,4 @@ export {
 } from './files.js';
 
 // GitHub Actions workflow generators
-export { generateCIWorkflow, generateDependabotConfig } from './workflows.js';
+export { generateCIWorkflow, generateCDWorkflow, generateDependabotConfig } from './workflows.js';

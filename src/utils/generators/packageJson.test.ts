@@ -275,8 +275,9 @@ describe('generatePackageJson', () => {
       const config = { ...baseConfig, useLinting: true };
       const { packageJson: pkg } = await generatePackageJson(config);
 
-      expect(pkg.scripts.lint).toBe('eslint . --ext .ts');
-      expect(pkg.scripts['lint:fix']).toBe('eslint . --ext .ts --fix');
+      // Flat config doesn't use --ext flag; file patterns are in eslint.config.js
+      expect(pkg.scripts.lint).toBe('eslint .');
+      expect(pkg.scripts['lint:fix']).toBe('eslint . --fix');
       expect(pkg.scripts.format).toBe('prettier --write "src/**/*.{ts,js,json,md}"');
       expect(pkg.scripts['format:check']).toBe('prettier --check "src/**/*.{ts,js,json,md}"');
     });

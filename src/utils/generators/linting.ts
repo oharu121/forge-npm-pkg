@@ -5,21 +5,6 @@
 
 import type { ProjectConfig } from './types.js';
 
-interface ESLintConfig {
-  env: {
-    node: boolean;
-    es2021: boolean;
-  };
-  extends: string[];
-  parserOptions: {
-    ecmaVersion: string;
-    sourceType: string;
-  };
-  rules: Record<string, unknown>;
-  parser?: string;
-  plugins?: string[];
-}
-
 interface PrettierConfig {
   semi: boolean;
   trailingComma: string;
@@ -30,35 +15,58 @@ interface PrettierConfig {
 }
 
 /**
- * Generates ESLint configuration
+ * Generates ESLint flat config (eslint.config.js)
+ * Uses the modern flat config format introduced in ESLint v9
  */
-export function generateEslintConfig(config: ProjectConfig): ESLintConfig {
-  const eslintConfig: ESLintConfig = {
-    env: {
-      node: true,
-      es2021: true,
+export function generateEslintConfig(config: ProjectConfig): string {
+  if (config.language === 'typescript') {
+    // TypeScript flat config
+    return `import js from '@eslint/js';
+import tsPlugin from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
+import prettierConfig from 'eslint-config-prettier';
+
+export default [
+  js.configs.recommended,
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
     },
-    extends: ['eslint:recommended'],
-    parserOptions: {
+    plugins: {
+      '@typescript-eslint': tsPlugin,
+    },
+    rules: {
+      ...tsPlugin.configs.recommended.rules,
+      ...prettierConfig.rules,
+    },
+  },
+];
+`;
+  } else {
+    // JavaScript flat config
+    return `import js from '@eslint/js';
+import prettierConfig from 'eslint-config-prettier';
+
+export default [
+  js.configs.recommended,
+  {
+    files: ['**/*.js', '**/*.mjs'],
+    languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
     },
-    rules: {},
-  };
-
-  // TypeScript-specific config
-  if (config.language === 'typescript') {
-    eslintConfig.parser = '@typescript-eslint/parser';
-    eslintConfig.plugins = ['@typescript-eslint'];
-    eslintConfig.extends.push(
-      'plugin:@typescript-eslint/recommended',
-      'prettier'
-    );
-  } else {
-    eslintConfig.extends.push('prettier');
+    rules: {
+      ...prettierConfig.rules,
+    },
+  },
+];
+`;
   }
-
-  return eslintConfig;
 }
 
 /**
