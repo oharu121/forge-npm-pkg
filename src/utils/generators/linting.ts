@@ -22,29 +22,89 @@ export function generateEslintConfig(config: ProjectConfig): string {
   if (config.language === 'typescript') {
     // TypeScript flat config
     return `import js from '@eslint/js';
-import tsPlugin from '@typescript-eslint/eslint-plugin';
-import tsParser from '@typescript-eslint/parser';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsparser from '@typescript-eslint/parser';
 import prettierConfig from 'eslint-config-prettier';
 
 export default [
-  js.configs.recommended,
+  // Ignore patterns (replaces .eslintignore)
   {
-    files: ['**/*.ts', '**/*.tsx'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'coverage/**',
+      '**/*.d.ts',
+    ],
+  },
+
+  // Base config for all files
+  js.configs.recommended,
+
+  // TypeScript files
+  {
+    files: ['**/*.ts'],
     languageOptions: {
-      parser: tsParser,
+      parser: tsparser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
       },
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        Buffer: 'readonly',
+        NodeJS: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        fetch: 'readonly',
+        AbortSignal: 'readonly',
+      },
     },
     plugins: {
-      '@typescript-eslint': tsPlugin,
+      '@typescript-eslint': tseslint,
     },
     rules: {
-      ...tsPlugin.configs.recommended.rules,
-      ...prettierConfig.rules,
+      ...tseslint.configs.recommended.rules,
+      '@typescript-eslint/no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      }],
     },
   },
+
+  // Test files - allow any type for mocking
+  {
+    files: ['**/*.test.ts', '**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+
+  // JavaScript/MJS files - scripts
+  {
+    files: ['**/*.js', '**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+      },
+    },
+    rules: {
+      'no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      }],
+    },
+  },
+
+  // Prettier config (must be last to override other configs)
+  prettierConfig,
 ];
 `;
   } else {
@@ -53,17 +113,54 @@ export default [
 import prettierConfig from 'eslint-config-prettier';
 
 export default [
+  // Ignore patterns (replaces .eslintignore)
+  {
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'coverage/**',
+    ],
+  },
+
+  // Base config for all files
   js.configs.recommended,
+
+  // JavaScript files
   {
     files: ['**/*.js', '**/*.mjs'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        Buffer: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        fetch: 'readonly',
+        AbortSignal: 'readonly',
+      },
     },
     rules: {
-      ...prettierConfig.rules,
+      'no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      }],
     },
   },
+
+  // Test files
+  {
+    files: ['**/*.test.js', '**/*.spec.js'],
+    rules: {
+      'no-unused-vars': 'off',
+    },
+  },
+
+  // Prettier config (must be last to override other configs)
+  prettierConfig,
 ];
 `;
   }

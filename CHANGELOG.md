@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.1]
+
+### Changed
+
+- **Dependabot auto-merge now includes major updates** - All Dependabot PRs are auto-approved and auto-merged
+  - Previously only patch and minor updates were auto-merged
+  - Major updates no longer require manual review
+
+- **updated eslint.config**
+
 ## [2.4.0]
 
 ### Added

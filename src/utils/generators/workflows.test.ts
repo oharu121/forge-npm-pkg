@@ -157,12 +157,6 @@ describe('generateDependabotAutoMergeWorkflow', () => {
     expect(workflow).toContain('dependabot/fetch-metadata@v2');
   });
 
-  it('should only auto-merge non-major updates', () => {
-    const workflow = generateDependabotAutoMergeWorkflow(mockActionVersions);
-
-    expect(workflow).toContain("steps.metadata.outputs.update-type != 'version-update:semver-major'");
-  });
-
   it('should use squash merge method', () => {
     const workflow = generateDependabotAutoMergeWorkflow(mockActionVersions);
 
