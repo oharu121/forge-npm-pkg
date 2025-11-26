@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0]
+
+### Added
+
+- **Dependabot auto-merge workflow** - Automatically generates `.github/workflows/dependabot-auto-merge.yml` when Dependabot is enabled
+  - Auto-approves and auto-merges patch and minor dependency updates
+  - Major updates still require manual review (breaking changes need attention)
+  - Uses squash merge for clean git history
+  - Uses GitHub's native auto-merge feature (no third-party services needed)
+- **Clear setup instructions** - After project creation, displays required GitHub settings:
+  - Enable "Allow auto-merge" in repository settings
+  - Enable "Allow GitHub Actions to create and approve pull requests"
+- **Dynamic `dependabot/fetch-metadata` versioning** - Action version fetched dynamically like other GitHub Actions
+- **GitHub repository creation** - Optional prompt to create GitHub repository using `gh` CLI
+  - Only shown when git is initialized AND `gh` CLI is available and authenticated
+  - Supports public or private repositories
+  - Automatically uses package description
+  - Detects existing repos to prevent conflicts
+  - Graceful fallback with manual command on failure
+
+### Technical
+
+- Added `generateDependabotAutoMergeWorkflow()` function in `src/utils/generators/workflows.ts`
+- Added `dependabot/fetch-metadata` to supported actions in `src/utils/actionsFetcher.ts`
+- Updated dry run output to show new workflow file
+- Added comprehensive test suite for new workflow generator
+- Added `src/utils/ghCli.ts` with GitHub CLI helper functions
+- Added `src/utils/ghCli.test.ts` with mocked test suite
+
 ## [2.3.1]
 
 ### Added

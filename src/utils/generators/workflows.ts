@@ -174,3 +174,51 @@ updates:
 `;
 }
 
+/**
+ * Generates a GitHub Actions workflow for auto-merging Dependabot PRs
+ * Auto-approves and enables auto-merge for patch and minor updates
+ * Major updates require manual review
+ */
+export function generateDependabotAutoMergeWorkflow(
+  actionVersions: Map<string, ActionVersionResult>
+): string {
+  const fetchMetadataVersion = actionVersions.get('dependabot/fetch-metadata')?.version || 'v2';
+
+  return `name: Dependabot Auto-Merge
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@${fetchMetadataVersion}
+        with:
+          github-token: \${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-approve patch and minor updates
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: \${{ github.event.pull_request.html_url }}
+          GH_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge for patch and minor updates
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: \${{ github.event.pull_request.html_url }}
+          GH_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+`;
+}
+

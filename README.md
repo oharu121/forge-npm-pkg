@@ -69,14 +69,15 @@ my-awesome-package/
 ├── .github/
 │   ├── workflows/
 │   │   ├── ci.yml (if CI enabled)
-│   │   └── publish.yml (if CD enabled)
+│   │   ├── publish.yml (if CD enabled)
+│   │   └── dependabot-auto-merge.yml (if Dependabot enabled)
 │   └── dependabot.yml (if Dependabot enabled)
 ├── package.json
 ├── tsconfig.json (if TypeScript)
 ├── tsup.config.ts (if TypeScript)
 ├── vitest.config.ts (if Vitest selected)
 ├── jest.config.ts (if Jest selected)
-├── .eslintrc.json (if linting enabled)
+├── eslint.config.js (if linting enabled)
 ├── .prettierrc (if linting enabled)
 ├── .gitignore
 └── README.md
@@ -182,21 +183,31 @@ The tool will:
 - ✓ Initialize git repository
 - ✓ Create GitHub Actions workflows (CI + Publish)
 - ✓ Run initial build to verify setup
+- ✓ Optionally create GitHub repository (if `gh` CLI is available)
 
 ### 2. Create GitHub Repository
+
+If you have the [GitHub CLI](https://cli.github.com/) installed and authenticated, the tool will prompt you to create a GitHub repository automatically:
+
+```
+◆ Create GitHub repository?
+│ ○ Public repository
+│ ○ Private repository
+│ ● Skip - I'll create it manually
+```
+
+**If you skip or don't have `gh` CLI:**
 
 ```bash
 cd my-awesome-package
 
 # Create repository on GitHub (using GitHub CLI)
-gh repo create my-awesome-package --public --source=. --remote=origin
+gh repo create my-awesome-package --public --source=. --remote=origin --push
 
 # Or manually:
 # 1. Go to https://github.com/new
 # 2. Create repository named "my-awesome-package"
-# 3. Follow GitHub's instructions to push existing repository
-
-# Push to GitHub
+# 3. Add remote and push:
 git remote add origin https://github.com/yourusername/my-awesome-package.git
 git branch -M main
 git push -u origin main
@@ -731,6 +742,26 @@ MIT
 ## Dependency Management Workflow
 
 This project uses Dependabot to automate dependency updates with a smart grouping strategy.
+
+### Dependabot Auto-Merge
+
+When you enable Dependabot, the tool generates an auto-merge workflow that:
+- **Auto-merges patch and minor updates** after CI passes
+- **Requires manual review for major updates** (breaking changes)
+- **Uses squash merge** for clean git history
+
+**Required GitHub Settings:**
+
+To enable auto-merge, configure these settings in your repository:
+
+1. **Enable auto-merge:**
+   - Settings → General → Pull Requests → ✅ Allow auto-merge
+
+2. **Allow GitHub Actions to approve PRs:**
+   - Settings → Actions → General → Workflow permissions
+   - ✅ Allow GitHub Actions to create and approve pull requests
+
+Once configured, Dependabot PRs for patch/minor updates will automatically merge after CI passes.
 
 ### Dependabot Configuration
 

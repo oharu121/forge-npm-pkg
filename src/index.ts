@@ -26,6 +26,7 @@ import {
   generateCIWorkflow,
   generateCDWorkflow,
   generateDependabotConfig,
+  generateDependabotAutoMergeWorkflow,
   generateGetTokenScript,
   generateReleaseScript,
 } from "./utils/generators/index.js";
@@ -37,6 +38,12 @@ import {
 } from "./utils/userConfig.js";
 import { readGitConfig, formatGitConfig } from "./utils/gitConfig.js";
 import { fetchLatestActionVersions } from "./utils/actionsFetcher.js";
+import {
+  isGhCliReady,
+  doesRepoExist,
+  createGitHubRepo,
+  getManualRepoCommand,
+} from "./utils/ghCli.js";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
@@ -671,6 +678,7 @@ Package Manager: ${config.packageManager}${
         }
         if (config.useDependabot) {
           clack.log.info(`    .github/dependabot.yml`);
+          clack.log.info(`    .github/workflows/dependabot-auto-merge.yml`);
         }
         clack.outro("✨ Dry run complete!");
         return;
@@ -770,6 +778,8 @@ Package Manager: ${config.packageManager}${
         }
 
 
+        let gitInitialized = false;
+
         if (postInstallTasks.length > 0) {
           spinner.start("Running post-install tasks");
           const results = await Promise.allSettled(postInstallTasks);
@@ -779,6 +789,9 @@ Package Manager: ${config.packageManager}${
               const { success, task, error } = result.value;
               if (success) {
                 clack.log.success(`✓ ${task} initialized`);
+                if (task === "git") {
+                  gitInitialized = true;
+                }
               } else {
                 clack.log.warn(`⚠ Failed to initialize ${task}: ${error}`);
               }
@@ -788,7 +801,54 @@ Package Manager: ${config.packageManager}${
           spinner.stop("Post-install tasks completed");
         }
 
-        // Step 9: Post-install verification
+        // Step 9: GitHub repository creation (optional, only if git initialized and gh CLI ready)
+        if (gitInitialized && isGhCliReady()) {
+          // Check if repo already exists
+          if (doesRepoExist(finalPackageName)) {
+            clack.log.info(
+              `Repository "${finalPackageName}" already exists on GitHub`
+            );
+          } else {
+            const createRepo = handleCancel(
+              await clack.select({
+                message: "Create GitHub repository?",
+                options: [
+                  { value: "public", label: "Public repository" },
+                  { value: "private", label: "Private repository" },
+                  { value: "skip", label: "Skip - I'll create it manually" },
+                ],
+                initialValue: "skip",
+              })
+            );
+
+            if (createRepo !== "skip") {
+              spinner.start("Creating GitHub repository...");
+              const result = createGitHubRepo({
+                name: finalPackageName,
+                description: config.description,
+                isPrivate: createRepo === "private",
+                cwd: targetDir,
+              });
+
+              if (result.success) {
+                spinner.stop(`✓ Repository created: ${result.url}`);
+              } else {
+                spinner.stop("⚠ Failed to create repository");
+                clack.log.warn(result.error || "Unknown error");
+                clack.note(
+                  `Run this command manually:\n\n  ${getManualRepoCommand(
+                    finalPackageName,
+                    createRepo === "private",
+                    config.description
+                  )}`,
+                  "Manual Setup"
+                );
+              }
+            }
+          }
+        }
+
+        // Step 10: Post-install verification
         if (config.language === "typescript") {
           spinner.start("Verifying installation");
           try {
@@ -845,6 +905,19 @@ Package Manager: ${config.packageManager}${
         console.log("  npm run lint         # Lint your code");
       }
       console.log("");
+
+      // Show Dependabot auto-merge setup instructions
+      if (config.useDependabot) {
+        console.log("🤖 Dependabot Auto-Merge Setup:\n");
+        console.log("  To enable automatic merging of Dependabot PRs, configure these GitHub settings:\n");
+        console.log("  1. Enable auto-merge for your repository:");
+        console.log("     Settings → General → Pull Requests → ✅ Allow auto-merge\n");
+        console.log("  2. Allow GitHub Actions to approve PRs:");
+        console.log("     Settings → Actions → General → Workflow permissions");
+        console.log("     → ✅ Allow GitHub Actions to create and approve pull requests\n");
+        console.log("  Once configured, patch and minor updates will be auto-merged after CI passes.");
+        console.log("  Major updates will still require manual review.\n");
+      }
     } catch (error) {
       clack.cancel("An error occurred");
       console.error(error);
@@ -1054,11 +1127,15 @@ describe('add', () => {
       await writeFile(join(workflowDir, "ci.yml"), generateCIWorkflow(config, nodeConfig, actionVersions));
     }
 
-    // Dependabot configuration
+    // Dependabot configuration and auto-merge workflow
     if (config.useDependabot) {
       await writeFile(
         join(githubDir, "dependabot.yml"),
         generateDependabotConfig()
+      );
+      await writeFile(
+        join(workflowDir, "dependabot-auto-merge.yml"),
+        generateDependabotAutoMergeWorkflow(actionVersions)
       );
     }
   }

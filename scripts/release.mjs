@@ -101,18 +101,36 @@ async function release() {
       // Check for uncommitted changes before pulling
       const status = exec('git status --porcelain', true).trim();
       if (status) {
-        clack.log.error('Cannot pull: you have uncommitted changes');
-        clack.note(
-          'Recovery steps:\n' +
-          '  1. Stash your changes:  git stash\n' +
-          '  2. Pull latest:         git pull --rebase\n' +
-          '  3. Install deps:        npm install\n' +
-          '  4. Restore changes:     git stash pop\n' +
-          '  5. Run release again',
-          'How to fix:'
-        );
-        clack.outro('Stash your changes, pull, then retry');
-        exit(1);
+        clack.log.warn('You have uncommitted changes');
+
+        try {
+          const statusOutput = exec('git status --short', true);
+          clack.note(statusOutput, 'Uncommitted changes:');
+        } catch {
+          // Ignore if we can't show status
+        }
+
+        const shouldCommitFirst = await clack.confirm({
+          message: 'Commit changes before pulling? (recommended)',
+          initialValue: true,
+        });
+
+        if (clack.isCancel(shouldCommitFirst) || !shouldCommitFirst) {
+          clack.cancel('Release cancelled - commit or stash your changes first');
+          exit(0);
+        }
+
+        // Commit the changes
+        try {
+          exec('git add .');
+          exec('git commit -m "WIP: save changes before pulling remote updates"');
+          clack.log.success('Changes committed');
+        } catch (error) {
+          clack.log.error('Failed to commit changes');
+          clack.log.error(error.message);
+          clack.outro('Fix the issue and try again');
+          exit(1);
+        }
       }
 
       // Safe to pull now

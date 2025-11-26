@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateCIWorkflow, generateDependabotConfig } from './workflows';
+import { generateCIWorkflow, generateDependabotConfig, generateDependabotAutoMergeWorkflow } from './workflows';
 import type { ProjectConfig } from './types';
 import type { NodeVersionConfig } from '../nodeFetcher';
 import type { ActionVersionResult } from '../actionsFetcher';
@@ -140,5 +140,46 @@ describe('generateDependabotConfig', () => {
     expect(config).toContain('interval: "weekly"');
     expect(config).toContain('open-pull-requests-limit: 10');
     expect(config).toContain('dependencies');
+  });
+});
+
+describe('generateDependabotAutoMergeWorkflow', () => {
+  const mockActionVersions = new Map<string, ActionVersionResult>([
+    ['dependabot/fetch-metadata', { version: 'v2' }]
+  ]);
+
+  it('should generate valid auto-merge workflow', () => {
+    const workflow = generateDependabotAutoMergeWorkflow(mockActionVersions);
+
+    expect(workflow).toContain('name: Dependabot Auto-Merge');
+    expect(workflow).toContain('pull_request_target');
+    expect(workflow).toContain("github.actor == 'dependabot[bot]'");
+    expect(workflow).toContain('dependabot/fetch-metadata@v2');
+  });
+
+  it('should only auto-merge non-major updates', () => {
+    const workflow = generateDependabotAutoMergeWorkflow(mockActionVersions);
+
+    expect(workflow).toContain("steps.metadata.outputs.update-type != 'version-update:semver-major'");
+  });
+
+  it('should use squash merge method', () => {
+    const workflow = generateDependabotAutoMergeWorkflow(mockActionVersions);
+
+    expect(workflow).toContain('gh pr merge --auto --squash');
+  });
+
+  it('should have required permissions', () => {
+    const workflow = generateDependabotAutoMergeWorkflow(mockActionVersions);
+
+    expect(workflow).toContain('contents: write');
+    expect(workflow).toContain('pull-requests: write');
+  });
+
+  it('should use fallback version when not provided', () => {
+    const emptyVersions = new Map<string, ActionVersionResult>();
+    const workflow = generateDependabotAutoMergeWorkflow(emptyVersions);
+
+    expect(workflow).toContain('dependabot/fetch-metadata@v2');
   });
 });

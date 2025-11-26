@@ -101,7 +101,8 @@ export interface ActionConfig {
 export const SUPPORTED_ACTIONS: ActionConfig[] = [
   { owner: 'actions', repo: 'checkout', key: 'actions/checkout' },
   { owner: 'actions', repo: 'setup-node', key: 'actions/setup-node' },
-  { owner: 'codecov', repo: 'codecov-action', key: 'codecov/codecov-action' }
+  { owner: 'codecov', repo: 'codecov-action', key: 'codecov/codecov-action' },
+  { owner: 'dependabot', repo: 'fetch-metadata', key: 'dependabot/fetch-metadata' }
 ];
 
 /**
@@ -125,5 +126,6 @@ export async function fetchLatestActionVersions(): Promise<Map<string, ActionVer
 export const FALLBACK_VERSIONS: Record<string, string> = {
   'actions/checkout': 'v5',
   'actions/setup-node': 'v6',
-  'codecov/codecov-action': 'v5'
+  'codecov/codecov-action': 'v5',
+  'dependabot/fetch-metadata': 'v2'
 };
