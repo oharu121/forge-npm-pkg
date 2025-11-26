@@ -153,24 +153,31 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # Group all minor and patch updates together, keep major separate for review
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
-    # Group all development dependencies together
-    groups:
-       dev-dependencies:
-          dependency-type: "development"
+      - "npm"
 
   # Check for GitHub Actions updates
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-    # Group all actions together
     groups:
-       actions:
-          patterns:
-            - "*"
+      actions:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "github-actions"
 `;
 }
 
