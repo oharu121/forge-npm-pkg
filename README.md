@@ -11,6 +11,12 @@
 
 A powerful CLI tool to scaffold production-ready npm packages with modern best practices.
 
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=BSMumRV1xR4">
+    <img src="https://img.youtube.com/vi/BSMumRV1xR4/sddefault.jpg" alt="Watch the video" />
+  </a>
+</div>
+
 ## Features
 
 - Interactive CLI with beautiful prompts
