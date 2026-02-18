@@ -47,7 +47,8 @@ export async function writeUserConfig(config: UserConfig): Promise<void> {
     throw new Error(
       `Failed to save config: ${
         error instanceof Error ? error.message : "Unknown error"
-      }`
+      }`,
+      { cause: error }
     );
   }
 }
@@ -66,7 +67,8 @@ export function resetUserConfig(): boolean {
     throw new Error(
       `Failed to reset config: ${
         error instanceof Error ? error.message : "Unknown error"
-      }`
+      }`,
+      { cause: error }
     );
   }
 }

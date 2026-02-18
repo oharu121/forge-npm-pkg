@@ -4,7 +4,19 @@
       "Bash(npm run build:*)",
       "Bash(npm run typecheck:*)",
       "Bash(npm run lint:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(node -e:*)",
+      "Bash(gh api:*)",
+      "Bash(gh issue create:*)",
+      "Bash(git fetch:*)",
+      "Bash(npm pkg:*)",
+      "Bash(pnpm run typecheck)",
+      "Bash(pnpm run lint)",
+      "Bash(pnpm run test)",
+      "Bash(pnpm run build)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm version:*)"
     ],
     "deny": [
       "Bash(npm test:*)"

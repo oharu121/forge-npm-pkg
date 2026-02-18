@@ -83,7 +83,7 @@ function handleCancel<T>(
 /**
  * Validates package name according to npm rules
  */
-function validatePackageName(name: string): string | undefined {
+function validatePackageName(name: string | undefined): string | undefined {
   if (!name) return "Package name is required";
   if (name.length > NPM_NAME_MAX_LENGTH) {
     return `Package name must be ${NPM_NAME_MAX_LENGTH} characters or less`;
