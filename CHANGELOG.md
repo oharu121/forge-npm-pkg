@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed TypeScript DTS build error (TS2322) where `validatePackageName` parameter type `string` was incompatible with `@clack/prompts` `text()` validate callback signature expecting `string | undefined`
+- Added `{ cause: error }` to re-thrown errors in `userConfig.ts` for proper error chaining
+
+### Changed
+
+- Bumped tsconfig `target` and `lib` from ES2020 to ES2024 to align with `engines.node >= 22` requirement
 
 ## [2.4.1]
 

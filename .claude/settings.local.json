@@ -16,11 +16,20 @@
       "Bash(pnpm run build)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(npm version:*)"
+      "Bash(npm version:*)",
+      "Bash(git push)",
+      "Bash(git push:*)",
+      "Bash(gh release create:*)",
+      "Bash(pnpm typecheck)",
+      "Bash(pnpm lint)",
+      "Bash(pnpm test)",
+      "Bash(pnpm build)",
+      "Bash(gh issue view:*)",
+      "Bash(gh release list:*)",
+      "Bash(gh issue edit:*)",
+      "Bash(gh release edit:*)"
     ],
-    "deny": [
-      "Bash(npm test:*)"
-    ],
+    "deny": [],
     "ask": []
   }
 }
