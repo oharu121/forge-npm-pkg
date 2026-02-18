@@ -464,7 +464,7 @@ npm publish --access public
 
 **CI fails on push:**
 - Check GitHub Actions tab for error details
-- Run `npm run build` and `npm test` locally first
+- Run `pnpm build` and `pnpm test` locally first
 - Ensure all tests pass before pushing
 
 **NPM_TOKEN error during publish:**
@@ -621,8 +621,8 @@ If a package was just released, you'll see:
 ```bash
 git clone https://github.com/yourusername/forge-npm-pkg
 cd forge-npm-pkg
-npm install
-npm run build
+pnpm install
+pnpm build
 ```
 
 ### Testing Strategy
@@ -634,10 +634,10 @@ This project uses a multi-layered testing approach to ensure quality:
 Test individual generator functions and validators:
 
 ```bash
-npm test                    # Run unit tests once
-npm run test:watch          # Run in watch mode
-npm run test:coverage       # Generate coverage report
-npm run test:ui             # Interactive UI mode
+pnpm test                   # Run unit tests once
+pnpm test:watch             # Run in watch mode
+pnpm test:coverage          # Generate coverage report
+pnpm test:ui                # Interactive UI mode
 ```
 
 #### 2. E2E Tests
@@ -645,7 +645,7 @@ npm run test:ui             # Interactive UI mode
 Automated end-to-end tests that verify the full CLI workflow:
 
 ```bash
-npm run test:e2e            # Creates project, runs build and tests
+pnpm test:e2e               # Creates project, runs build and tests
 ```
 
 #### 3. Developer Testing (Experience the CLI)
@@ -653,8 +653,8 @@ npm run test:e2e            # Creates project, runs build and tests
 Quick scripts to manually test the CLI flow and UX:
 
 ```bash
-npm run dev:test            # Interactive mode - experience all prompts
-npm run dev:test:quick      # Quick mode with -y flag
+pnpm dev:test               # Interactive mode - experience all prompts
+pnpm dev:test:quick         # Quick mode with -y flag
 ```
 
 These generate projects in `.dev-test/` which is auto-cleaned and gitignored.
@@ -679,13 +679,13 @@ Automated testing on every push:
 ### Run All Tests
 
 ```bash
-npm run test:all            # Typecheck + Unit + E2E
+pnpm test:all               # Typecheck + Unit + E2E
 ```
 
 ### Test locally with npm link
 
 ```bash
-npm link
+pnpm link --global
 forge-npm-pkg test-package
 ```
 
@@ -694,7 +694,7 @@ forge-npm-pkg test-package
 This project includes an interactive release automation tool:
 
 ```bash
-npm run release
+pnpm release
 ```
 
 The script provides a beautiful interactive experience with `@clack/prompts`:
@@ -720,11 +720,11 @@ See [scripts/README.md](scripts/README.md) for detailed documentation.
 
 **Manual alternative:**
 ```bash
-npm run sync              # Pull latest + install + test
-npm run test:all          # Verify everything passes
+pnpm sync                 # Pull latest + install + test
+pnpm test:all             # Verify everything passes
 git add .
 git commit -m "feat: your message"
-npm version patch         # or minor, or major
+pnpm version patch        # or minor, or major
 git push && git push --tags
 ```
 
@@ -795,20 +795,20 @@ When Dependabot creates PRs while you're working locally:
 
 3. **Sync your local repository**
    ```bash
-   npm run sync
+   pnpm sync
    ```
 
-   This runs: `git pull --rebase && npm install && npm test`
+   This runs: `git pull --rebase && pnpm install && pnpm test`
 
-   Or use `npm run sync:quick` to skip tests (faster):
+   Or use `pnpm sync:quick` to skip tests (faster):
    ```bash
-   npm run sync:quick
+   pnpm sync:quick
    ```
 
-4. **If package-lock.json changed, commit and push**
+4. **If pnpm-lock.yaml changed, commit and push**
    ```bash
-   git add package-lock.json
-   git commit -m "chore: update package-lock.json after merge"
+   git add pnpm-lock.yaml
+   git commit -m "chore: update pnpm-lock.yaml after merge"
    git push
    ```
 

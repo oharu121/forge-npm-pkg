@@ -14,7 +14,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "dev:clean": "rimraf .dev-test .test-output",
-    "dev:test": "npm run dev:clean && npm run build && node dist/index.js .dev-test/my-package",
+    "dev:test": "pnpm dev:clean && pnpm build && node dist/index.js .dev-test/my-package",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -24,10 +24,10 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
-    "test:all": "npm run typecheck && npm run lint && npm run test",
-    "prepublishOnly": "npm run build && npm run test:all",
-    "sync": "git pull --rebase && npm install && npm test",
-    "sync:quick": "git pull --rebase && npm install",
+    "test:all": "pnpm typecheck && pnpm lint && pnpm test",
+    "prepublishOnly": "pnpm build && pnpm test:all",
+    "sync": "git pull --rebase && pnpm install && pnpm test",
+    "sync:quick": "git pull --rebase && pnpm install",
     "release": "node scripts/release.mjs",
     "token": "node scripts/get-token.mjs"
   },
@@ -75,5 +75,6 @@
   },
   "engines": {
     "node": ">=22.0.0"
-  }
+  },
+  "packageManager": "pnpm@10.30.0"
 }
