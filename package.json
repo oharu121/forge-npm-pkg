@@ -51,7 +51,7 @@
   "homepage": "https://github.com/oharu121/forge-npm-pkg#readme",
   "dependencies": {
     "@clack/prompts": "^1.0.0",
-    "commander": "^14.0.2",
+    "commander": "^15.0.0",
     "env-paths": "^4.0.0",
     "fs-extra": "^11.2.0",
     "update-notifier": "^7.3.1"
